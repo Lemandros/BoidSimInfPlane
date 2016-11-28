@@ -48,6 +48,7 @@ MainWindow::MainWindow(QWidget *parent) :
   ui->updateInfBoidsPushButton->setEnabled(false);
   ui->groupInfo->setEnabled(false);
   ui->boidTrackerSpinBox->setEnabled(false);
+  LoadSettingsFromFile( );
   ui->nrOfInformedBoidsInGroupSpinBox->setMaximum(ui->nrOfBoidsSpinBox->value( ));
   qDebug( ) << "Init...";
   Init( );
@@ -315,7 +316,8 @@ void MainWindow::on_nrOfInformedBoidsInGroupSpinBox_valueChanged(int arg1) {
 
 void MainWindow::on_nrOfTimeStepsPerUpdateSpinBox_valueChanged(int arg1) {
   nrOfTimeStepsPerUpdate = arg1;
-  updateText( );
+  if(ui->updateDefSettingsCheckBox->isChecked( ))
+    WriteSettingsToFile( );
 } // on_nrOfTimeStepsPerUpdateSpinBox_valueChanged
 
 void MainWindow::ComputeFreq( ) {
@@ -331,9 +333,9 @@ void MainWindow::ComputeFreq( ) {
 
 void MainWindow::on_forceConstantSpinBox_valueChanged(double arg1) {
   sim->forceConstant = arg1;
+  if(ui->updateDefSettingsCheckBox->isChecked( ))
+    WriteSettingsToFile( );
 } // on_forceConstantSpinBox_valueChanged
-
-
 
 void MainWindow::resizeEvent(QResizeEvent *event){
   ReDrawOnInterfaceChange( );
@@ -701,15 +703,21 @@ void MainWindow::SaveData(QString datFileName){
 
 void MainWindow::on_etaSpinBox_valueChanged(double arg1){
   sim->eta = arg1;
+  if(ui->updateDefSettingsCheckBox->isChecked( ))
+    WriteSettingsToFile( );
 } // on_etaSpinBox_valueChanged
 
 void MainWindow::on_drawBoidsCheckBox_toggled(bool checked){
   sim->drawBoids = checked;
   ReDrawOnInterfaceChange( );
+  if(ui->updateDefSettingsCheckBox->isChecked( ))
+    WriteSettingsToFile( );
 } // on_drawBoidsCheckBox_toggled
 void MainWindow::on_drawCrossCheckBox_toggled(bool checked){
   sim->drawCross = checked;
   ReDrawOnInterfaceChange( );
+  if(ui->updateDefSettingsCheckBox->isChecked( ))
+    WriteSettingsToFile( );
 } // on_drawCrossCheckBox_toggled
 
 void MainWindow::on_updateInfBoidsPushButton_clicked( ){
@@ -728,6 +736,8 @@ void MainWindow::on_emptyHistsPushButton_clicked( ){
 
 void MainWindow::on_vNoughtSpinBox_valueChanged(double arg1){
   sim->vNought = arg1;
+  if(ui->updateDefSettingsCheckBox->isChecked( ))
+    WriteSettingsToFile( );
 } // on_vNoughtSpinBox_valueChanged
 
 void MainWindow::createPlot( ){
@@ -789,60 +799,6 @@ void MainWindow::on_alignRotCheckBox_toggled(bool checked){
   sim->rotateToxAxis = checked;
   ReDrawOnInterfaceChange( );
 } // on_alignRotCheckBox_toggled
-
-void MainWindow::scriptPressed( ){
-  int timestepstorun = 100000;
-  int numIncA = 1;
-  int numIncB = 41;
-  int stepsPerUpdate = 100;
-
-  ui->etaSpinBox->setValue(0.1);
-  ui->initPosComboBox->setCurrentIndex(1);
-  ui->nrOfBoidsSpinBox->setValue(2000);
-QString oldFileName = "/net/zilcken/data1/InfPlane/VarForceEta0.10/Rotating/BoidPlots_PDiDRaF10.0000H0.1000.boidInf";
-oldFileName = "/net/zilcken/data1/InfPlane/BoidPlots_PDiDRaF10.0000H0.1000.boidInf";
-  for(int i = 0; i < numIncA; i++){
-    //ui->etaSpinBox->setValue(0.1 + i * 0.05);
-    //ui->informedAngleDoubleSpinBox->setValue((double) i / 100.0);
-    //ui->forceConstantSpinBox->setValue(1.0 + double(i) * 4.0);
-    for(int j = 1; j < numIncB; j++){
-      ui->forceConstantSpinBox->setValue(10.0 - double (j) * 0.25);
-      //ui->forceConstantSpinBox->setValue(10.0 * pow(10, 2.0 * double(j)/21));
-      //ui->etaSpinBox->setValue( + double(j) * 0.025);
-      qDebug( ) << "Start init...";
-      Init( );
-      qDebug( ) << "Done with init";
-
-      qDebug( ) << "Loading checkpoint...";
-      LoadKeepCurrParams(oldFileName);
-
-      sim->p.clear( );
-      sim->convHullAreaVec.clear( );
-      sim->t = 0;
-      ShowSim( );
-      for(int k = 0; k < timestepstorun;k++){
-        sim->NextStep( );
-
-        if(k%stepsPerUpdate == 0){
-          if (sim->convHullArea >= 10000.0) {
-            k = 0;
-            Init( );
-            qDebug( ) << "Diverging! Restarting";
-          }
-          PrintStatusBar( );
-          ShowSim( );
-          qDebug( ) << i << j << sim->t << sim->eta << sim->rho << sim->forceConstant << sim->convHullArea;
-        } // if
-      } // for k
-      qDebug( ) << "Done with time loop, i" << i << "j" << j;
-      QString datFileName = FileName( );
-      oldFileName = datFileName + ".boidInf";
-      SaveData(datFileName + ".dat");
-      SaveCheckPoint(datFileName + ".boidInf");
-    } // for j
-    qDebug( ) << "Done with inner loop, i" << i;
-  } // for i
-} // scriptPressed
 
 void MainWindow::WriteSettingsToFile( ){
   ofstream file("settings.ini");
@@ -927,4 +883,73 @@ void MainWindow::on_drawDirectionHullCheckBox_toggled(bool checked){
   sim->drawHullDirections = checked;
   ReDrawOnInterfaceChange( );
 } // on_drawDirectionHullCheckBox_toggled
+void MainWindow::scriptPressed( ){
+  int timestepstorun = 100000;
+  int numIncA = 1;
+  int numIncB = 41;
+  int stepsPerUpdate = 100;
 
+  ui->etaSpinBox->setValue(0.1);
+  ui->initPosComboBox->setCurrentIndex(1);
+  ui->nrOfBoidsSpinBox->setValue(2000);
+QString oldFileName = "/net/zilcken/data1/InfPlane/VarForceEta0.10/Rotating/BoidPlots_PDiDRaF10.0000H0.1000.boidInf";
+oldFileName = "/net/zilcken/data1/InfPlane/BoidPlots_PDiDRaF10.0000H0.1000.boidInf";
+  for(int i = 0; i < numIncA; i++){
+    //ui->etaSpinBox->setValue(0.1 + i * 0.05);
+    //ui->informedAngleDoubleSpinBox->setValue((double) i / 100.0);
+    //ui->forceConstantSpinBox->setValue(1.0 + double(i) * 4.0);
+    for(int j = 1; j < numIncB; j++){
+      ui->forceConstantSpinBox->setValue(10.0 - double (j) * 0.25);
+      //ui->forceConstantSpinBox->setValue(10.0 * pow(10, 2.0 * double(j)/21));
+      //ui->etaSpinBox->setValue( + double(j) * 0.025);
+      qDebug( ) << "Start init...";
+      Init( );
+      qDebug( ) << "Done with init";
+
+      qDebug( ) << "Loading checkpoint...";
+      LoadKeepCurrParams(oldFileName);
+
+      sim->p.clear( );
+      sim->convHullAreaVec.clear( );
+      sim->t = 0;
+      ShowSim( );
+      for(int k = 0; k < timestepstorun;k++){
+        sim->NextStep( );
+
+        if(k%stepsPerUpdate == 0){
+          if (sim->convHullArea >= 10000.0) {
+            k = 0;
+            Init( );
+            qDebug( ) << "Diverging! Restarting";
+          }
+          PrintStatusBar( );
+          ShowSim( );
+          qDebug( ) << i << j << sim->t << sim->eta << sim->rho << sim->forceConstant << sim->convHullArea;
+        } // if
+      } // for k
+      qDebug( ) << "Done with time loop, i" << i << "j" << j;
+      QString datFileName = FileName( );
+      oldFileName = datFileName + ".boidInf";
+      SaveData(datFileName + ".dat");
+      SaveCheckPoint(datFileName + ".boidInf");
+    } // for j
+    qDebug( ) << "Done with inner loop, i" << i;
+  } // for i
+} // scriptPressed
+
+
+
+void MainWindow::on_nrOfBoidsSpinBox_valueChanged(int arg1){
+  if(ui->updateDefSettingsCheckBox->isChecked( ))
+    WriteSettingsToFile( );
+} // on_nrOfBoidsSpinBox_valueChanged
+
+void MainWindow::on_initPosComboBox_currentIndexChanged(int index){
+  if(ui->updateDefSettingsCheckBox->isChecked( ))
+    WriteSettingsToFile( );
+} // on_initPoscomboBox_currentIndexChanged
+
+void MainWindow::on_initDirectionComboBox_currentIndexChanged(int index){
+  if(ui->updateDefSettingsCheckBox->isChecked( ))
+    WriteSettingsToFile( );
+} // on_initDirectionComboBox_currentIndexChanged

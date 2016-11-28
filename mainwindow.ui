@@ -284,6 +284,13 @@
               </item>
              </layout>
             </item>
+            <item>
+             <widget class="QCheckBox" name="updateDefSettingsCheckBox">
+              <property name="text">
+               <string>Update default settings</string>
+              </property>
+             </widget>
+            </item>
            </layout>
           </widget>
          </item>
@@ -973,8 +980,8 @@
    <slot>noisePressed(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>198</x>
-     <y>95</y>
+     <x>-1</x>
+     <y>-1</y>
     </hint>
     <hint type="destinationlabel">
      <x>763</x>

@@ -145,6 +145,12 @@ private slots:
 
   void WriteSettingsToFile( );
   void LoadSettingsFromFile( );
+  void on_nrOfBoidsSpinBox_valueChanged(int arg1);
+
+  void on_initPosComboBox_currentIndexChanged(int index);
+
+  void on_initDirectionComboBox_currentIndexChanged(int index);
+
 private:
   Ui::MainWindow *ui;
 };

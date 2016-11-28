@@ -844,7 +844,87 @@ oldFileName = "/net/zilcken/data1/InfPlane/BoidPlots_PDiDRaF10.0000H0.1000.boidI
   } // for i
 } // scriptPressed
 
+void MainWindow::WriteSettingsToFile( ){
+  ofstream file("settings.ini");
+  file << "Default settings for BoidSimInfPlane" << endl
+       << "NumBoids " << ui->nrOfBoidsSpinBox->value( ) << endl
+       << "Eta " << ui->etaSpinBox->value( ) << endl
+       << "StepsPerUpdate " << ui->nrOfTimeStepsPerUpdateSpinBox->value( ) << endl
+       << "v0 " << ui->vNoughtSpinBox->value( ) << endl
+       << "Tmax " << ui->nrOfTimeStepsSpinBox->value( ) << endl
+       << "Rho " << ui->rhoSpinBox->value( ) << endl
+       << "Gamma " << ui->forceConstantSpinBox->value( ) << endl
+       << "Pos " << ui->initPosComboBox->currentIndex( ) << endl
+       << "Dir " << ui->initDirectionComboBox->currentIndex( ) << endl;
+  file.close( );
+} // WriteSettingsToFile
+
+void MainWindow::LoadSettingsFromFile( ){
+  ifstream file("settings.ini");
+  string line, temp;
+  double dblVal;
+  int intVal;
+  getline(file, line); // get header line
+
+  getline(file, line); // get number of boids line
+  istringstream ssNumBoids(line);
+  ssNumBoids >> temp;
+  ssNumBoids >> intVal;
+  ui->nrOfBoidsSpinBox->setValue(intVal);
+
+  getline(file, line); // get eta line
+  istringstream ssEta(line);
+  ssEta >> temp;
+  ssEta >> dblVal;
+  ui->etaSpinBox->setValue(dblVal);
+
+  getline(file, line); // get timesteps per update line
+  istringstream ssStepsUpdate(line);
+  ssStepsUpdate >> temp;
+  ssStepsUpdate >> intVal;
+  ui->nrOfTimeStepsPerUpdateSpinBox->setValue(intVal);
+
+  getline(file, line); // get v0 line
+  istringstream ssV0(line);
+  ssV0 >> temp;
+  ssV0 >> dblVal;
+  ui->vNoughtSpinBox->setValue(dblVal);
+
+  getline(file, line); // get Tmax line
+  istringstream ssTmax(line);
+  ssTmax >> temp;
+  ssTmax >> intVal;
+  ui->nrOfTimeStepsSpinBox->setValue(intVal);
+
+  getline(file, line); // get Rho line
+  istringstream ssRho(line);
+  ssRho >> temp;
+  ssRho >> dblVal;
+  ui->rhoSpinBox->setValue(dblVal);
+
+  getline(file, line); // get gamma line
+  istringstream ssGamma(line);
+  ssGamma >> temp;
+  ssGamma >> dblVal;
+  ui->forceConstantSpinBox->setValue(dblVal);
+
+  getline(file, line); // get position init line
+  istringstream ssPos(line);
+  ssPos >> temp;
+  ssPos >> intVal;
+  ui->initPosComboBox->setCurrentIndex(intVal);
+
+  getline(file, line); // get direction init line
+  istringstream ssDir(line);
+  ssDir >> temp;
+  ssDir >> intVal;
+  ui->initDirectionComboBox->setCurrentIndex(intVal);
+
+  file.close( );
+} // LoadSettingsFromFile
+
 void MainWindow::on_drawDirectionHullCheckBox_toggled(bool checked){
   sim->drawHullDirections = checked;
   ReDrawOnInterfaceChange( );
 } // on_drawDirectionHullCheckBox_toggled
+

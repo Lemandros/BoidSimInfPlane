@@ -143,6 +143,8 @@ private slots:
 
   void on_drawDirectionHullCheckBox_toggled(bool checked);
 
+  void WriteSettingsToFile( );
+  void LoadSettingsFromFile( );
 private:
   Ui::MainWindow *ui;
 };

@@ -156,7 +156,7 @@ QImage BoidSim2D::ToQImage(uint size, bool antiAliasing) {
     } // if drawboids
     if(b.trackAngles == trackBoidTrail && drawBoidTrail){
 
-      int nrOfTrails;
+      uint nrOfTrails;
       if(nrOfTrailPoints >= t)
         nrOfTrails = t;
       else nrOfTrails = nrOfTrailPoints;
@@ -354,7 +354,7 @@ void BoidSim2D::InitBoids(int posIndex, int dirIndex ) {
   boids.clear( );
   boids = vector <Boid> (nrOfBoids);
   avgPosGeom.Zero( );
-
+  P.Zero( );
   for (int i = 0; i < boids.size( ); i++) {
     Boid &b = boids[i];
     b.curAngle = 10;
@@ -392,6 +392,9 @@ void BoidSim2D::InitBoids(int posIndex, int dirIndex ) {
       case 3: b.OrientOutward( );
               break;
     }
+    P += b.v;
+
+
     if(b.r.x < (double)minX){
         minX = b.r.x;
         minXd = b.r.x;
@@ -411,7 +414,7 @@ void BoidSim2D::InitBoids(int posIndex, int dirIndex ) {
 
     b.prefAngle = 0;
   } // for
-
+  P /= nrOfBoids;
   nBoxX = maxX - minX + 2;
   nBoxY = maxY - minY + 2;
   avgPosGeom /= nrOfBoids;
@@ -530,15 +533,15 @@ void BoidSim2D::MoveBoids( ){
     double polBulkY = 0.0;
     double polHullX = 0.0;
     double polHullY = 0.0;
-    int mX = avgPosGeom.x;
-    double mXd = avgPosGeom.x;
-    int Mx = mX;
-    double MxD = mXd;
-    int mY = avgPosGeom.y;
-    double mYd = avgPosGeom.y;
-    int My = mY;
-    double MyD = mYd;
-    double theta = 0.0;
+    int mX = avgPosGeom.x; // int minX for reduction
+    double mXd = avgPosGeom.x; // double minXd for reduction
+    int Mx = mX; // int maxX for reduction
+    double MxD = mXd; // double maxXd for reduction
+    int mY = avgPosGeom.y; // int minY for reduction
+    double mYd = avgPosGeom.y; // double minYd for reduction
+    int My = mY; // int maxY for reduction
+    double MyD = mYd; // int maxYd for reduction
+    //double theta = 0.0;
     //double polTheta = P.Theta( );
     #pragma omp parallel for reduction(+:hullCount, bulkCount, polX, polY, polBulkX, polBulkY, polHullX, polHullY), reduction(max:Mx, MxD, My, MyD), reduction(min:mX, mXd, mY, mYd)
     for (uint i = 0; i < boids.size( ); i++){
@@ -739,7 +742,9 @@ void BoidSim2D::FindConvexHull( ){
   for(uint i = 0; i < convexHull.size( ); i++){
     Boid &b = boids[convexHull[i]];
 
+    // find normal vector for boid b
     CalcHullNormal(b, i);
+    // find angle
     FindHullAngle(b, pNorm, polAngle, i);
     UpdateDAngleHist(b, i);
 
@@ -810,49 +815,14 @@ void BoidSim2D::FindArea( ){
   convHullAreaVec.push_back(convHullArea);
 }//FindArea
 
-void BoidSim2D::PrintToFile(uint index, string lineEdit){
-  //prints a vector (area, polarization, curvature, etc)
-  //to a file
-  ostringstream fileName;
-  fileName.str("");
-  fileName.clear( );
-  switch(index){
-  case 0: fileName << "area"; break;
-  case 1: fileName << "curvature"; break;
-  case 2: fileName << "polarization"; break;
-  case 3: fileName << "density"; break;
-  }//switch
-  fileName << lineEdit << ".dat";
-  ofstream file(fileName.str( ));
-  file << "# N:" << nrOfBoids
-       << " Rho: " << rho
-       << " Eta: " << eta
-       << " g: " << forceConstant
-       << " v_0: " << vNought << "\n";
-  for(uint i = 0; i < nrOfInformedGroups; i++){
-    file << "# Group " << i << ": " << informedBoids[i].first << " leaders, "
-         << informedBoids[i].second << " angle.\n";
-  }//for
-  for(uint i = 0; i < t; i++){
-    file << i << "\t";
-    switch(index){
-     case 0: file << convHullAreaVec[i]; break;
-     case 1: file << curvatureVec[i]; break;
-     case 2: file << p[i].Length( ); break;
-     case 3: file << (double) nrOfBoids / convHullAreaVec[i]; break;
-    }//switch
-    file << "\n";
-  }//for
-}//PrintToFile
-
-
 void BoidSim2D::FindHullAngle(Boid &b, Vector2D pNorm, double polAngle, uint boidIndex){
   // find angle between polarisation vector and position on hull wrt the geometric center
   double theta = (b.r - avgPosGeomOld).Theta( ) - polAngle; // ang of boid in [-2PI, 2PI]
   theta += (theta > M_PI) ? - M_2PI : ((theta < - M_PI) ? M_2PI : 0);
   theta += M_PI;
 
-  if (theta >= 0 && theta < closestParAnglePlus) { // found new boid closest to polarization direction
+  /*
+    if (theta >= 0 && theta < closestParAnglePlus) { // found new boid closest to polarization direction
     closestParAnglePlus = theta;
     parBoidNrA = convexHull[boidIndex];
     parBoidNrB = (boidIndex > 0)? convexHull[boidIndex-1] : convexHull.back( );
@@ -863,7 +833,7 @@ void BoidSim2D::FindHullAngle(Boid &b, Vector2D pNorm, double polAngle, uint boi
     thetaB += M_PI;
     closestParAngleMin = thetaB;
   } // if
-
+  */
 //  if (theta <= 0 && theta > closestParAngleMin) { // found new boid closest to polarization direction
 //    closestParAngleMin = theta;
 //    parBoidNrB = convexHull[boidIndex];
@@ -882,7 +852,9 @@ void BoidSim2D::FindHullAngle(Boid &b, Vector2D pNorm, double polAngle, uint boi
   // find boid velocity components parallel and transverse to polarisation and add to distribution
   double parallelComp = b.v.DotProduct(pNorm);
   componentHist[nr].first += parallelComp; // cos(relAngle);
+
   componentHist[nr].second += sqrt(1.0 - parallelComp * parallelComp); // sin(relAngle);
+
 } // FindHullAngles
 
 // updates dAngleHist (histogram of dAngle for all angles)
@@ -1015,7 +987,7 @@ CONSTRUCTORS
 BoidSim2D::BoidSim2D(int seed, double rho, uint nrOfBoids, int posIndex) {
   this->trackCOM = -1;
   nrOfTrailPoints = 10;
-  drawBoidTrail = true;
+  drawBoidTrail = false;
   this->nrOfBoids = nrOfBoids;
   this->t = 0;
   nrOfBoidsToTrack = 100;

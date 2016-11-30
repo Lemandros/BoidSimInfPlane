@@ -249,7 +249,6 @@ public:
   void MoveBoids( );
   void FindConvexHull( );
   void FindArea( );
-  void PrintToFile(uint index, string lineEdit);
   void FindHullAngle(Boid &b, Vector2D pNorm, double polAngle, uint boidIndex);
   void UpdateDAngleHist(Boid &b, uint i);
   void CalcHullNormal(Boid &b, uint i);

@@ -37,7 +37,17 @@
           </item>
           <item>
            <property name="text">
-            <string>Curvature</string>
+            <string>CurvTot</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>CurvBulk</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>CurvHull</string>
            </property>
           </item>
           <item>
@@ -209,7 +219,6 @@
           <height>500</height>
          </size>
         </property>
-        <zorder></zorder>
        </widget>
       </item>
      </layout>

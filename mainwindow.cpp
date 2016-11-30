@@ -475,12 +475,37 @@ void MainWindow::LoadCheckPoint(QString fileName){
     getline(file, polInfo);
     istringstream lineStream4(polInfo);
     double x, y, area;
+
     lineStream4 >> x;
     lineStream4 >> y;
-    lineStream4 >> area;
+    if(i > 0){
+      double len1 = sqrt(x * x + y * y);
+      double len2 = sim->p.back( ).Length( );
+      sim->curvatureVec.push_back((sim->p.back( ).x * y - x * sim->p.back( ).y) / (len1 * len2 ));
+    } // if
     sim->p.push_back(BoidSim2D::Vector2D(x, y));
-    if(area != 0)
-      sim->convHullAreaVec.push_back(area);
+
+    lineStream4 >> area;
+    if(area != 0.0)
+        sim->convHullAreaVec.push_back(area);
+
+    lineStream4 >> x;
+    lineStream4 >> y;
+    if(i > 0){
+      double len1 = sqrt(x * x + y * y);
+      double len2 = sim->pBulk.back( ).Length( );
+      sim->curvatureBulkVec.push_back((sim->pBulk.back( ).x * y - x * sim->pBulk.back( ).y) / (len1 * len2 ));
+    } // if
+    sim->pBulk.push_back(BoidSim2D::Vector2D(x, y));
+
+    lineStream4 >> x;
+    lineStream4 >> y;
+    if(i > 0){
+      double len1 = sqrt(x * x + y * y);
+      double len2 = sim->pHull.back( ).Length( );
+      sim->curvatureHullVec.push_back((sim->pHull.back( ).x * y - x * sim->pHull.back( ).y) / (len1 * len2 ));
+    } // if
+    sim->pHull.push_back(BoidSim2D::Vector2D(x, y));
   } // for
 
   for(uint i = 0; i < nrBins; i++){
@@ -801,7 +826,7 @@ void MainWindow::on_alignRotCheckBox_toggled(bool checked){
 } // on_alignRotCheckBox_toggled
 
 void MainWindow::WriteSettingsToFile( ){
-  ofstream file("settings.ini");
+  ofstream file((defaultPath + "settings.ini").toStdString( ));
   file << "Default settings for BoidSimInfPlane" << endl
        << "NumBoids " << ui->nrOfBoidsSpinBox->value( ) << endl
        << "Eta " << ui->etaSpinBox->value( ) << endl
@@ -816,7 +841,7 @@ void MainWindow::WriteSettingsToFile( ){
 } // WriteSettingsToFile
 
 void MainWindow::LoadSettingsFromFile( ){
-  ifstream file("settings.ini");
+  ifstream file((defaultPath + "settings.ini").toStdString( ));
   string line, temp;
   double dblVal;
   int intVal;
@@ -879,6 +904,21 @@ void MainWindow::LoadSettingsFromFile( ){
   file.close( );
 } // LoadSettingsFromFile
 
+void MainWindow::on_nrOfBoidsSpinBox_valueChanged(int arg1){
+  if(ui->updateDefSettingsCheckBox->isChecked( ))
+    WriteSettingsToFile( );
+} // on_nrOfBoidsSpinBox_valueChanged
+
+void MainWindow::on_initPosComboBox_currentIndexChanged(int index){
+  if(ui->updateDefSettingsCheckBox->isChecked( ))
+    WriteSettingsToFile( );
+} // on_initPoscomboBox_currentIndexChanged
+
+void MainWindow::on_initDirectionComboBox_currentIndexChanged(int index){
+  if(ui->updateDefSettingsCheckBox->isChecked( ))
+    WriteSettingsToFile( );
+} // on_initDirectionComboBox_currentIndexChanged
+
 void MainWindow::on_drawDirectionHullCheckBox_toggled(bool checked){
   sim->drawHullDirections = checked;
   ReDrawOnInterfaceChange( );
@@ -892,14 +932,13 @@ void MainWindow::scriptPressed( ){
   ui->etaSpinBox->setValue(0.1);
   ui->initPosComboBox->setCurrentIndex(1);
   ui->nrOfBoidsSpinBox->setValue(2000);
-QString oldFileName = "/net/zilcken/data1/InfPlane/VarForceEta0.10/Rotating/BoidPlots_PDiDRaF10.0000H0.1000.boidInf";
-oldFileName = "/net/zilcken/data1/InfPlane/BoidPlots_PDiDRaF10.0000H0.1000.boidInf";
+QString oldFileName = "/net/zilcken/data1/InfPlane/VarForceEta0.10/Stationary/BoidPlots_PDiDRaF9.0000H0.1000.boidInf";
   for(int i = 0; i < numIncA; i++){
     //ui->etaSpinBox->setValue(0.1 + i * 0.05);
     //ui->informedAngleDoubleSpinBox->setValue((double) i / 100.0);
     //ui->forceConstantSpinBox->setValue(1.0 + double(i) * 4.0);
     for(int j = 1; j < numIncB; j++){
-      ui->forceConstantSpinBox->setValue(10.0 - double (j) * 0.25);
+      ui->forceConstantSpinBox->setValue(9.0 + double (j) * 0.05);
       //ui->forceConstantSpinBox->setValue(10.0 * pow(10, 2.0 * double(j)/21));
       //ui->etaSpinBox->setValue( + double(j) * 0.025);
       qDebug( ) << "Start init...";
@@ -929,27 +968,10 @@ oldFileName = "/net/zilcken/data1/InfPlane/BoidPlots_PDiDRaF10.0000H0.1000.boidI
       } // for k
       qDebug( ) << "Done with time loop, i" << i << "j" << j;
       QString datFileName = FileName( );
-      oldFileName = datFileName + ".boidInf";
+     // oldFileName = datFileName + ".boidInf";
       SaveData(datFileName + ".dat");
       SaveCheckPoint(datFileName + ".boidInf");
     } // for j
     qDebug( ) << "Done with inner loop, i" << i;
   } // for i
 } // scriptPressed
-
-
-
-void MainWindow::on_nrOfBoidsSpinBox_valueChanged(int arg1){
-  if(ui->updateDefSettingsCheckBox->isChecked( ))
-    WriteSettingsToFile( );
-} // on_nrOfBoidsSpinBox_valueChanged
-
-void MainWindow::on_initPosComboBox_currentIndexChanged(int index){
-  if(ui->updateDefSettingsCheckBox->isChecked( ))
-    WriteSettingsToFile( );
-} // on_initPoscomboBox_currentIndexChanged
-
-void MainWindow::on_initDirectionComboBox_currentIndexChanged(int index){
-  if(ui->updateDefSettingsCheckBox->isChecked( ))
-    WriteSettingsToFile( );
-} // on_initDirectionComboBox_currentIndexChanged

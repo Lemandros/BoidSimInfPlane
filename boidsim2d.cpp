@@ -178,14 +178,22 @@ QImage BoidSim2D::ToQImage(uint size, bool antiAliasing) {
       } // for
       qPainter.drawPath(qPainterPath);
     }
-    if(drawDirection){
-      if(b.convHullNormal.x == 0.0 && b.convHullNormal.y == 0.0){
-        boidPen.setColor(QColor(0, 0, 255, 200));
-        qPainter.setPen(boidPen);
-        qPainter.drawLine((b.r.x + offset.x) * scale, (b.r.y + offset.y) * scale,
-                          (b.r.x + offset.x) * scale + 10.0 * b.v.x, (b.r.y + offset.y) * scale + 10.0 * b.v.y);
-      } // if hull
-    } // if drawDirection
+    if(drawDirection || drawHullDirections){
+      if(drawDirection){
+          boidPen.setColor(QColor(0, 0, 255, 200));
+          qPainter.setPen(boidPen);
+          qPainter.drawLine((b.r.x + offset.x) * scale, (b.r.y + offset.y) * scale,
+                            (b.r.x + offset.x) * scale + 10.0 * b.v.x, (b.r.y + offset.y) * scale + 10.0 * b.v.y);
+      } // if drawDirection
+      if(drawHullDirections){
+        if(b.prevAngle != 10.0){
+          boidPen.setColor(QColor(0, 255, 0, 200));
+          qPainter.setPen(boidPen);
+          qPainter.drawLine((b.r.x + offset.x) * scale, (b.r.y + offset.y) * scale,
+                            (b.r.x + offset.x ) * scale + 10.0 * b.v.x, (b.r.y + offset.y) * scale + 10.0 * b.v.y);
+        } // if hull
+      } // if drawHullDirections
+    } // if draw directions
   } // for boids
 
   // draw lines parallel and perpendicular to the polarisation through the center of the hull
@@ -250,7 +258,7 @@ QImage BoidSim2D::ToQImage(uint size, bool antiAliasing) {
   } // if drawCross
 
   //  //draw boids on convex hull and edges of convex hull
-  if(drawHull || drawHullBoids || drawHullDirections){
+  if(drawHull || drawHullBoids){
     boidPen.setColor(QColor(0, 255, 0, 200));
     qPainter.setPen(boidPen);
     QPainterPath qPainterPath;
@@ -266,12 +274,6 @@ QImage BoidSim2D::ToQImage(uint size, bool antiAliasing) {
         else
           qPainterPath.moveTo(x, y);
       } // if
-      if(drawHullDirections){
-        boidPen.setColor(QColor(0, 255, 0, 200));
-        qPainter.setPen(boidPen);
-        qPainter.drawLine((b.r.x + offset.x) * scale, (b.r.y + offset.y) * scale,
-                          (b.r.x + offset.x ) * scale + 10.0 * b.v.x, (b.r.y + offset.y) * scale + 10.0 * b.v.y);
-      }
     } // for
 
     if(drawHull){
@@ -359,6 +361,7 @@ void BoidSim2D::InitBoids(int posIndex, int dirIndex ) {
     Boid &b = boids[i];
     b.curAngle = 10;
     b.prefAngle = 10;
+    b.prevAngle = 10;
 
     switch(posIndex){
       case 0: b.r.RandBox(this, rng); // square
@@ -558,10 +561,11 @@ void BoidSim2D::MoveBoids( ){
         else // vectorial
           b.v = (Vector2D(this, rng) * eta * b.numNeighbours + b.avgV).Normalised( );
       }
-      b.avgV.Zero( );
+
 
       //update informed boid orientation and convex hull boids
       b.v = Vector2D(b.v.Theta( ) + b.prefAngle) + b.convHullNormal * forceConstant;
+
       b.v.Normalise( );
 
       if(b.trackAngles != -10){
@@ -572,7 +576,8 @@ void BoidSim2D::MoveBoids( ){
       } // if trackAngles
 
       b.Move(vNought);
-
+      b.avgV.Zero( );
+      b.numNeighbours = 0;
       if(b.trackAngles == trackCOM) COM = b.r;
 
       if(b.r.x < (double)mX)
@@ -606,7 +611,7 @@ void BoidSim2D::MoveBoids( ){
 
       polX += b.v.x;
       polY += b.v.y;
-
+b.prevAngle = b.curAngle;
       b.convHullNormal.Zero( );
     }
 
@@ -809,8 +814,10 @@ void BoidSim2D::FindArea( ){
   for(uint i = 0; i < max;i++)
     convHullArea += boids[convexHull[i]].r.x * boids[convexHull[i+1]].r.y
                   - boids[convexHull[i]].r.y * boids[convexHull[i+1]].r.x;
+
   convHullArea += boids[convexHull[max]].r.x * boids[convexHull[0]].r.y
                   - boids[convexHull[max]].r.y * boids[convexHull[0]].r.x;
+
   convHullArea /= 2.0;
   convHullAreaVec.push_back(convHullArea);
 }//FindArea
@@ -840,7 +847,7 @@ void BoidSim2D::FindHullAngle(Boid &b, Vector2D pNorm, double polAngle, uint boi
 //  } // if
 
   // update curAngle and prevAngle of current boid
-  b.prevAngle = b.curAngle;
+
   b.curAngle = theta;
 
   // find bind number for angular distribution of boids on the hull and add it
@@ -848,6 +855,8 @@ void BoidSim2D::FindHullAngle(Boid &b, Vector2D pNorm, double polAngle, uint boi
   if (nr == angHist.size( ))
     nr = 0;
   angHist[nr]++;
+  radiusHist[nr] += (avgPosGeomOld - b.r).Length( );
+
 
   // find boid velocity components parallel and transverse to polarisation and add to distribution
   double parallelComp = b.v.DotProduct(pNorm);
@@ -1023,6 +1032,7 @@ BoidSim2D::BoidSim2D(int seed, double rho, uint nrOfBoids, int posIndex) {
   angHist = vector <int>(numBins, 0);
   componentHist = vector<pair<double, double> > (numBins);
   dAngleHist = vector < pair <uint, double> > (numBins);
+  radiusHist = vector<double> (numBins);
 } // BoidSim2D
 
 BoidSim2D::Boid::Boid(Vector2D r, Vector2D v, double prefAngle, int trackNr){

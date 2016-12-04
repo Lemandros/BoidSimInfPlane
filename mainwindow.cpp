@@ -345,13 +345,13 @@ void MainWindow::SaveCheckPoint(QString fileName){
   ofstream file(fileName.toStdString( ));
   file.precision(10);
   file.setf(ios::fixed, ios::floatfield);
-  file << "# Boids\tRho\tEta\tScalar\tvNought\tSeed\tTimesteps\tGroups\tInitPos\tInitDir\tGamma\tangularPDF" << endl;
+  file << "# Boids\tRho\tEta\tScalar\tvNought\tSeed\tTimesteps\tGroups\tInitPos\tInitDir\tGamma\tangularPDF\tr_GC" << endl;
 
   file  << "# " << sim->nrOfBoids << "\t" << sim->rho << "\t" << sim->eta << "\t"
         << sim->noiseType << "\t\t" << sim->vNought << "\t" << sim->seed << "\t\t"
         << sim->t << "\t\t" << informedGroups.size( ) << "\t"
         << ui->initPosComboBox->currentIndex( ) << "\t" << ui->initDirectionComboBox->currentIndex( ) << "\t"
-        << ui->forceConstantSpinBox->value( ) << "\t" << sim->angHist.size( )<< endl << "# ";
+        << ui->forceConstantSpinBox->value( ) << "\t" << sim->angHist.size( ) << "\t" << sim->avgPosGeom.x << "\t" << sim->avgPosGeom.y << endl << "# ";
 
   for(uint i = 0; i < informedGroups.size( ); i++)
     file << informedGroups[i].first << "\t" << informedGroups[i].second << "\t";
@@ -514,14 +514,26 @@ void MainWindow::LoadCheckPoint(QString fileName){
     istringstream lineStream4(angleInfo);
     int dAngleCount;
     double counts, parallelCount, transverseCount, dAngleSum;
+    string parallelCountStr, transverseCountStr;
     lineStream4 >> counts;
-    lineStream4 >> parallelCount;
-    lineStream4 >> transverseCount;
+    lineStream4 >> parallelCountStr;
+    lineStream4 >> transverseCountStr;
+
     lineStream4 >> dAngleCount;
     lineStream4 >> dAngleSum;
     sim->angHist.push_back(counts);
-    sim->componentHist.push_back(pair<double, double> (parallelCount, transverseCount));
+    sim->componentHist.push_back(pair<double, double> (stod(parallelCountStr), stod(transverseCountStr)));
     sim->dAngleHist.push_back(pair<uint, double> (dAngleCount, dAngleSum));
+  }
+  for(uint i = 0; i < nrBins; i++){
+    if(sim->componentHist[i].first != sim->componentHist[i].first){
+      double parallelPrev = (i == 0) ? sim->componentHist.back( ).first : sim->componentHist[i - 1].first;
+      double parallelNext = (i == nrBins - 1) ? sim->componentHist.front( ).first : sim->componentHist[i + 1].first;
+      double transversePrev = (i == 0) ? sim->componentHist.back( ).second : sim->componentHist[i - 1].second;
+      double transverseNext = (i == nrBins - 1) ? sim->componentHist.front( ).second : sim->componentHist[i + 1].second;
+      sim->componentHist[i].first = (parallelPrev + parallelNext) / 2.0;
+      sim->componentHist[i].second = (transversePrev + transverseNext) / 2.0;
+    }
   }
   file.close( );
 
@@ -756,6 +768,7 @@ void MainWindow::on_emptyHistsPushButton_clicked( ){
     sim->angHist[i] = 0;
     sim->componentHist[i].first = 0.0;
     sim->componentHist[i].second = 0.0;
+    sim->radiusHist[i] = 0.0;
   } // for
 } // on_emptyHistsPushButton_clicked
 
@@ -918,6 +931,37 @@ void MainWindow::on_initDirectionComboBox_currentIndexChanged(int index){
   if(ui->updateDefSettingsCheckBox->isChecked( ))
     WriteSettingsToFile( );
 } // on_initDirectionComboBox_currentIndexChanged
+
+void MainWindow::on_saveHistsPushButton_toggled(bool checked){
+  QString fileName = QFileDialog::getSaveFileName(this, tr("Save boid config"), defaultPath,tr("BoidInf Files (*.boidHists"));
+    if(!fileName.isEmpty( ))
+      SaveHists(fileName);
+} // on_saveHistsPushButton_toggled
+
+void MainWindow::SaveHists(QString fileName){
+  ofstream file(fileName.toStdString( ));
+  file.precision(10);
+  file.setf(ios::fixed, ios::floatfield);
+  file << "# Boids\tRho\tEta\tScalar\tvNought\tSeed\tTimesteps\tGroups\tInitPos\tInitDir\tGamma\tangularPDF\tr_GC" << endl;
+
+  file  << "# " << sim->nrOfBoids << "\t" << sim->rho << "\t" << sim->eta << "\t"
+        << sim->noiseType << "\t\t" << sim->vNought << "\t" << sim->seed << "\t\t"
+        << sim->t << "\t\t" << informedGroups.size( ) << "\t"
+        << ui->initPosComboBox->currentIndex( ) << "\t" << ui->initDirectionComboBox->currentIndex( ) << "\t"
+        << ui->forceConstantSpinBox->value( ) << "\t" << sim->angHist.size( ) << "\t"
+        << sim->avgPosGeom.x << "\t" << sim->avgPosGeom.y << endl << "# ";
+
+  for(uint i = 0; i < informedGroups.size( ); i++)
+    file << informedGroups[i].first << "\t" << informedGroups[i].second << "\t";
+  file << endl;
+
+  for(uint i = 0; i < )
+    file << sim->angHist[i] << "\t" << sim->radiusHist[i] << "\t"
+         << sim->componentHist[i].first << "\t" << sim->componentHist[i].second << "\t"
+         << sim->dAngleHist[i].first << "\t" << sim->dAngleHist[i].second << endl;
+
+  file.close( );
+} // SaveHists
 
 void MainWindow::on_drawDirectionHullCheckBox_toggled(bool checked){
   sim->drawHullDirections = checked;

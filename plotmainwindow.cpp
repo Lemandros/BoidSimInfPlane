@@ -259,8 +259,8 @@ void PlotMainWindow::PlotFunction(QCustomPlot* plot, QComboBox* comboBox, QSpinB
     plot->graph(0)->setPen(QPen(Qt::red));
     plot->xAxis->setTicker(QSharedPointer<QCPAxisTickerPi>(new QCPAxisTickerPi));
     for(int i = 0; i < sim->numBins; i++){
-      plot->graph(0)->addData(double(i) / sim->numBins * M_2PI - M_PI, sim->componentHist[i].first / sim->angHist[i]);
-      plot->graph(1)->addData(double(i) / sim->numBins * M_2PI - M_PI, sim->componentHist[i].second / sim->angHist[i]);
+      plot->graph(0)->addData(double(i) / sim->numBins * M_2PI - M_PI, sim->componentHist[i].first / double(sim->angHist[i]));
+      plot->graph(1)->addData(double(i) / sim->numBins * M_2PI - M_PI, sim->componentHist[i].second / double(sim->angHist[i]));
     } // for
     plot->rescaleAxes( );
     plot->yAxis->setRangeLower(-1.0);
@@ -269,8 +269,17 @@ void PlotMainWindow::PlotFunction(QCustomPlot* plot, QComboBox* comboBox, QSpinB
     plot->addGraph( );
     plot->xAxis->setTicker(QSharedPointer<QCPAxisTickerPi>(new QCPAxisTickerPi));
     for (uint i = 0; i < sim->dAngleHist.size( ); i++) {
-      plot->graph( )->addData(double(i)/sim->dAngleHist.size( ) * M_2PI - M_PI, sim->dAngleHist[i].second / sim->dAngleHist[i].first);
+      plot->graph( )->addData(double(i)/sim->dAngleHist.size( ) * M_2PI - M_PI, sim->dAngleHist[i].second / double(sim->dAngleHist[i].first));
     } // for
+    plot->rescaleAxes( );
+  } // else if
+  else if (comboBox->currentIndex( ) == 14) { // histogram of distance from geometric center
+    plot->addGraph( );
+    plot->xAxis->setTicker(QSharedPointer<QCPAxisTickerPi>(new QCPAxisTickerPi));
+    for (uint i = 0; i < sim->radiusHist.size( ); i++) {
+      plot->graph( )->addData(double(i)/sim->radiusHist.size( ) * M_2PI - M_PI, sim->radiusHist[i] / double(sim->angHist[i]));
+    } // for
+    plot->yAxis->setRangeLower(-1.0);
     plot->rescaleAxes( );
   } // else if
 
@@ -282,6 +291,18 @@ void PlotMainWindow::on_plotComboBox_currentIndexChanged(int index){
     ui->boidSelectorSpinBox->setVisible(true);
   else
     ui->boidSelectorSpinBox->setVisible(false);
+  if(index > 10){
+    ui->plotMaxPushButton->setVisible(false);
+    ui->plotMaxSpinBox->setVisible(false);
+    ui->plotMinSpinBox->setVisible(false);
+    ui->plotPlotAllPushButton->setVisible(false);
+  }
+  else{
+    ui->plotMaxPushButton->setVisible(true);
+    ui->plotMaxSpinBox->setVisible(true);
+    ui->plotMinSpinBox->setVisible(true);
+    ui->plotPlotAllPushButton->setVisible(true);
+  }
 } // on_plotComboBox_currentIndexChanged
 
 void PlotMainWindow::on_boidSelectorSpinBox_valueChanged(int arg1){

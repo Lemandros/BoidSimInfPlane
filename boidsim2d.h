@@ -34,6 +34,9 @@ public:
     double Theta( ) {
       return atan2(y,x);
     } // theta
+    double theta( ) {
+      return atan2(y,x) * 180.0 / M_PI;
+    } // theta
     void Zero( ){
       this->x = 0.0;
       this->y = 0.0;
@@ -221,6 +224,7 @@ public:
   vector <int> angHist; // histogram over time of boids on the hull
   vector <pair<double, double> > componentHist; // histogram of velocity components on the hull
   vector <pair<uint, double>> dAngleHist; // hoeveel boids op dAngle's en som van dAngle's
+  vector <double> radiusHist;
   int numBins;
 
 

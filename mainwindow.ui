@@ -482,6 +482,13 @@
           </widget>
          </item>
          <item>
+          <widget class="QPushButton" name="saveHistsPushButton">
+           <property name="text">
+            <string>Save Hists</string>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QCheckBox" name="followCenterCheckBox">
            <property name="text">
             <string>Follow</string>

@@ -151,6 +151,10 @@ private slots:
 
   void on_initDirectionComboBox_currentIndexChanged(int index);
 
+  void on_saveHistsPushButton_toggled(bool checked);
+
+  void SaveHists(QString fileName);
+
 private:
   Ui::MainWindow *ui;
 };

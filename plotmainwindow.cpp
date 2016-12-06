@@ -6,7 +6,6 @@
 #include <cmath>
 #include <boidsim2d.h>
 #include <QString>
-
 #define M_2PI      6.28318530717958647692
 
 
@@ -33,7 +32,7 @@ PlotMainWindow::~PlotMainWindow( ) {
   delete ui;
 } // ~PlotMainWindow
 
-void PlotMainWindow::closeEvent(QCloseEvent *event) {
+void PlotMainWindow::closeEvent( ) {
   // qDebug( ) << "PlotMainwWindow" << idNr << "is getting closed!";
   this->ui->plotWidget->clearGraphs( );
   emit GetsClosed(idNr);
@@ -126,7 +125,7 @@ void PlotMainWindow::PrintFunction(QComboBox* comboBox, QSpinBox* minSpin, QSpin
 
     // check what kind of data to output to file and do so
     if(comboBox->currentIndex( ) < 10){
-      for(int i = minSpin->value( ); i < maxSpin->value( ); i++){
+      for(uint i = minSpin->value( ); i < maxSpin->value( ); i++){
         switch(comboBox->currentIndex( )){
           case 0:
             file << i << "\t" << sim->convHullAreaVec[i] << endl;
@@ -165,11 +164,11 @@ void PlotMainWindow::PrintFunction(QComboBox* comboBox, QSpinBox* minSpin, QSpin
       } // for
     } // if 10
     else if (comboBox->currentIndex( ) == 11)
-      for (int i = 0; i < this->sim->numBins; i++)
+      for (uint i = 0; i < this->sim->numBins; i++)
         file << double(i) / sim->numBins * M_2PI - M_PI << "\t" << this->sim->angHist[i] << endl;
 
     else if(comboBox->currentIndex( ) == 12)
-      for(int i = 0; i < sim->numBins; i++)
+      for(uint i = 0; i < sim->numBins; i++)
         file << double(i) / sim->numBins * M_2PI - M_PI << "\t" << sim->componentHist[i].first / sim->angHist[i] << "\t"
              << double(i) / sim->numBins * M_2PI - M_PI << "\t" << sim->componentHist[i].second / sim->angHist[i] << endl;
 
@@ -247,7 +246,7 @@ void PlotMainWindow::PlotFunction(QCustomPlot* plot, QComboBox* comboBox, QSpinB
   } // if
   else if (comboBox->currentIndex( ) == 11){ // angular histogram of boids on the hull
     plot->addGraph( );
-    for (int i = 0; i < this->sim->numBins; i++)
+    for (uint i = 0; i < this->sim->numBins; i++)
       plot->graph( )->addData(double(i) / sim->numBins * M_2PI - M_PI, this->sim->angHist[i]);
     plot->rescaleAxes( );
     plot->xAxis->setTicker(QSharedPointer<QCPAxisTickerPi>(new QCPAxisTickerPi));
@@ -258,7 +257,7 @@ void PlotMainWindow::PlotFunction(QCustomPlot* plot, QComboBox* comboBox, QSpinB
     plot->addGraph( );
     plot->graph(0)->setPen(QPen(Qt::red));
     plot->xAxis->setTicker(QSharedPointer<QCPAxisTickerPi>(new QCPAxisTickerPi));
-    for(int i = 0; i < sim->numBins; i++){
+    for(uint i = 0; i < sim->numBins; i++){
       plot->graph(0)->addData(double(i) / sim->numBins * M_2PI - M_PI, sim->componentHist[i].first / double(sim->angHist[i]));
       plot->graph(1)->addData(double(i) / sim->numBins * M_2PI - M_PI, sim->componentHist[i].second / double(sim->angHist[i]));
     } // for

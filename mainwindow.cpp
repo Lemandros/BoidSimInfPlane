@@ -1,6 +1,5 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "plotclass.h"
 #include <QDebug>
 #include <QImage>
 #include <QString>
@@ -35,7 +34,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
   //this->setAttribute(Qt::WA_DeleteOnClose);
 
-  plotVec.clear( );
   // set to false for windows!
   if(OS) defaultPath = "/net/zilcken/data1/InfPlane/";
   else defaultPath = "F:\\Boids\\InfPlane\\";
@@ -67,13 +65,18 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
 // should be called when MainWindow is closed
-void MainWindow::closeEvent(QCloseEvent *event) {
+void MainWindow::closeEvent() {
   // close all plot windows
   qDebug( ) << "MainWindow closeEvent, now closing" << plotMainWindows.size( ) << "plots";
   for (uint i = 0; i < plotMainWindows.size( ); i++) {
     plotMainWindows[i]->close( );
     delete plotMainWindows[i];
     plotMainWindows[i] = NULL; // just in case
+  } // for
+  for (uint i = 0; i < fourierWindows.size( ); i++) {
+    fourierWindows[i]->close( );
+    delete fourierWindows[i];
+    fourierWindows[i] = NULL; // just in case
   } // for
 } // closeEvent
 
@@ -84,6 +87,17 @@ void MainWindow::ClosePlotWindow(int idNr) {
       delete plotMainWindows[i];
       plotMainWindows[i] = NULL; // just in case
       plotMainWindows.erase(plotMainWindows.begin( ) + i);
+      return;
+    } // if
+} // ClosePlotWindow
+
+void MainWindow::CloseFourierWindow(int idNr) {
+  qDebug( ) << "CloseFourierWindow! idNr =" << idNr;
+  for (uint i = 0; i < fourierWindows.size( ); i++)
+    if (fourierWindows[i]->idNr == idNr) { // we got him
+      delete fourierWindows[i];
+      fourierWindows[i] = NULL; // just in case
+      fourierWindows.erase(fourierWindows.begin( ) + i);
       return;
     } // if
 } // ClosePlotWindow
@@ -122,7 +136,6 @@ void MainWindow::savePressed( ){
 
 
 void MainWindow::Init( ){
-  plotVec.clear( );
   this->sim = new BoidSim2D(ui->seedSpinBox->value( ),
                             ui->rhoSpinBox->value( ),
                             ui->nrOfBoidsSpinBox->value( ),
@@ -337,7 +350,7 @@ void MainWindow::on_forceConstantSpinBox_valueChanged(double arg1) {
     WriteSettingsToFile( );
 } // on_forceConstantSpinBox_valueChanged
 
-void MainWindow::resizeEvent(QResizeEvent *event){
+void MainWindow::resizeEvent(){
   ReDrawOnInterfaceChange( );
 } // resizeEvent
 
@@ -513,7 +526,7 @@ void MainWindow::LoadCheckPoint(QString fileName){
     getline(file, angleInfo);
     istringstream lineStream4(angleInfo);
     int dAngleCount;
-    double counts, parallelCount, transverseCount, dAngleSum;
+    double counts, dAngleSum;
     string parallelCountStr, transverseCountStr;
     lineStream4 >> counts;
     lineStream4 >> parallelCountStr;
@@ -762,7 +775,7 @@ void MainWindow::on_updateInfBoidsPushButton_clicked( ){
 } // on_updateInfBoidsPushButton_clicked
 
 void MainWindow::on_emptyHistsPushButton_clicked( ){
-  for(int i = 0; i < sim->numBins; i++){
+  for(uint i = 0; i < sim->numBins; i++){
     sim->dAngleHist[i].first = 0;
     sim->dAngleHist[i].second = 0.0;
     sim->angHist[i] = 0;
@@ -791,6 +804,17 @@ void MainWindow::createPlot( ){
     //plotMainWindow->show( );
 
 } // createPlot
+
+void MainWindow::createFourier( ){
+  int idNr = (fourierWindows.size( ) == 0) ? 0 : fourierWindows.back( )->idNr + 1;
+  FFT * fourierWindow;
+  fourierWindow = new FFT(this, defaultPath, sim, idNr);
+  fourierWindow->show( );
+
+  QMainWindow::connect(fourierWindow, SIGNAL(GetsClosed(int)), SLOT(CloseFourierWindow(int)));
+
+  this->fourierWindows.push_back(fourierWindow);
+} // createFourier
 
 void MainWindow::on_trackComboBox_currentIndexChanged(int index){
   if(index == 1){
@@ -932,12 +956,6 @@ void MainWindow::on_initDirectionComboBox_currentIndexChanged(int index){
     WriteSettingsToFile( );
 } // on_initDirectionComboBox_currentIndexChanged
 
-void MainWindow::on_saveHistsPushButton_toggled(bool checked){
-  QString fileName = QFileDialog::getSaveFileName(this, tr("Save boid config"), defaultPath,tr("BoidInf Files (*.boidHists"));
-    if(!fileName.isEmpty( ))
-      SaveHists(fileName);
-} // on_saveHistsPushButton_toggled
-
 void MainWindow::SaveHists(QString fileName){
   ofstream file(fileName.toStdString( ));
   file.precision(10);
@@ -955,8 +973,8 @@ void MainWindow::SaveHists(QString fileName){
     file << informedGroups[i].first << "\t" << informedGroups[i].second << "\t";
   file << endl;
 
-  for(uint i = 0; i < )
-    file << sim->angHist[i] << "\t" << sim->radiusHist[i] << "\t"
+  for(uint i = 0; i < sim->numBins; i++)
+    file << double(i) * M_2PI / double(sim->numBins) - M_PI << "\t" << sim->angHist[i] << "\t" << sim->radiusHist[i] << "\t"
          << sim->componentHist[i].first << "\t" << sim->componentHist[i].second << "\t"
          << sim->dAngleHist[i].first << "\t" << sim->dAngleHist[i].second << endl;
 
@@ -1019,3 +1037,40 @@ QString oldFileName = "/net/zilcken/data1/InfPlane/VarForceEta0.10/Stationary/Bo
     qDebug( ) << "Done with inner loop, i" << i;
   } // for i
 } // scriptPressed
+
+void MainWindow::PrintHist( ){
+  vector<QString> fileNames;
+  fileNames.clear( );
+  ifstream input("/data1/InfPlane/filenames.txt");
+  string line;
+  while(getline(input, line)) // read in file paths
+    fileNames.push_back(QString::fromStdString(line));
+  input.close( );
+  uint timeStepsToRun = 50000;
+  uint stepsPerUpdate = 100;
+  for(uint i = 0; i < fileNames.size( ); i++){
+    Init( );
+    LoadCheckPoint(fileNames[i] + ".boidInf");
+    on_emptyHistsPushButton_clicked( );
+    for(uint j = 0; j < timeStepsToRun; j++){
+      sim->NextStep( );
+      if(j % stepsPerUpdate == 0){
+        PrintStatusBar( );
+        ShowSim( );
+        qDebug( ) << i << "\\" << fileNames.size( ) << fileNames[i] << j;
+      } // if
+    } // for j
+    SaveHists(fileNames[i] + ".boidHists");
+  } // for i
+
+} // PrintHist
+
+void MainWindow::on_saveHistsPushButton_clicked( ){
+  QString fileName = QFileDialog::getSaveFileName(this, tr("Save boid config"), defaultPath,tr("BoidInf Files (*.boidHists"));
+  if(!fileName.isEmpty( ))
+    SaveHists(fileName);
+} // on_saveHistsPushButton_clicked
+
+void MainWindow::on_runHistScriptPushButton_clicked( ){
+    PrintHist( );
+} // on_runHistScriptPushButton_clicked

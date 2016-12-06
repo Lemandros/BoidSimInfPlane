@@ -5,8 +5,7 @@
 #-------------------------------------------------
 
 QT       += core gui
-QMAKE_CFLAGS_RELEASE += -fopenmp
-LIBS += -fopenmp
+
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets printsupport
 
@@ -19,17 +18,25 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     boidsim2d.cpp \
     qcustomplot.cpp \
-    plotmainwindow.cpp
+    plotmainwindow.cpp \
+    fft.cpp
 
 HEADERS  += mainwindow.h \
     boidsim2d.h \
     qcustomplot.h \
-    plotmainwindow.h
+    plotmainwindow.h \
+    fft.h \
+    FFTw/include/fftw3.h
+
 
 FORMS    += mainwindow.ui \
-    plotmainwindow.ui
+    plotmainwindow.ui \
+    fft.ui
 
 QMAKE_CXXFLAGS += -fopenmp
+QMAKE_CFLAGS_RELEASE += -fopenmp
 LIBS += -fopenmp
+unix: LIBS += -lfftw3 -lm
+
 
 RESOURCES = resources.qrc

@@ -1,13 +1,14 @@
-<!DOCTYPE RCC><RCC version="1.0">
-<qresource>
-  <file>images/run.png</file>
-  <file>images/pause.png</file>
-  <file>images/init.png</file>
-  <file>images/save.png</file>
-  <file>images/load.png</file>
-  <file>images/vectorial.png</file>
-  <file>images/scalar.png</file>
-  <file>images/script.png</file>
-  <file>images/addplot.png</file>
-</qresource>
+<RCC>
+    <qresource prefix="/">
+        <file>images/run.png</file>
+        <file>images/pause.png</file>
+        <file>images/init.png</file>
+        <file>images/save.png</file>
+        <file>images/load.png</file>
+        <file>images/vectorial.png</file>
+        <file>images/scalar.png</file>
+        <file>images/script.png</file>
+        <file>images/addplot.png</file>
+        <file>images/fft.png</file>
+    </qresource>
 </RCC>

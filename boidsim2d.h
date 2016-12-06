@@ -100,8 +100,10 @@ public:
     void RandCircle(BoidSim2D* parent, mt19937* rng);
     void RandSquarePerim(BoidSim2D* parent, mt19937* rng);
     void RandNorm(BoidSim2D* parent, mt19937* rng);
-    void Rotate(double theta);
     void Normalise( );
+    void Rotate(double theta);
+    Vector2D Rotated(double theta);
+    Vector2D rotated(double theta);
     Vector2D Normalised( );
     Vector2D normalised( );
     Vector2D(BoidSim2D* parent, mt19937* rng);
@@ -179,7 +181,7 @@ public:
   uint nrOfInformedGroups;
   uint nrOfBoidsOnConvHull;
   uint t;
-  int nrOfTrailPoints;
+  uint nrOfTrailPoints;
   int minX, maxX, minY, maxY;
   double minXd, maxXd, minYd, maxYd;
   uint nBox, nBoxX, nBoxY;
@@ -225,7 +227,7 @@ public:
   vector <pair<double, double> > componentHist; // histogram of velocity components on the hull
   vector <pair<uint, double>> dAngleHist; // hoeveel boids op dAngle's en som van dAngle's
   vector <double> radiusHist;
-  int numBins;
+  uint numBins;
 
 
   mt19937 generator;

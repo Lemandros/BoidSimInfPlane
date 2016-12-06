@@ -7,10 +7,9 @@
 #include <QTimer>
 #include <time.h>
 #include "qcustomplot.h"
-#include <plotclass.h>
 #include "plotmainwindow.h"
 #include <vector>
-
+#include <fft.h>
 namespace Ui {
 class MainWindow;
 }
@@ -21,28 +20,28 @@ class MainWindow : public QMainWindow
 
 public:
   std::vector <PlotMainWindow*> plotMainWindows;
-
+  std::vector <FFT*> fourierWindows;
   QTimer * myTimer;
   QTimer * simFreqTimer;
   pair <uint, time_t> prevStepTime;
 
   BoidSim2D * sim;
   vector <pair <uint, double>> informedGroups;
-  vector<PlotClass> plotVec;
   uint nrOfUninformedBoids;
   uint nrOfTimeStepsPerUpdate;
   bool firstTimeTabSwitch;
   QString defaultPath;
   int screencounter;
   explicit MainWindow(QWidget *parent = 0);
-  void resizeEvent(QResizeEvent *event);
+  void resizeEvent();
   ~MainWindow( );
 
 protected:
-  void closeEvent(QCloseEvent *event);
+  void closeEvent();
 
 public slots:
   void ClosePlotWindow(int idNr);
+  void CloseFourierWindow(int idNr);
   void initPressed( );
   void runPausePressed(bool checked);
   void noisePressed(bool checked);
@@ -50,6 +49,7 @@ public slots:
   void savePressed( );
   void scriptPressed( );
   void createPlot( );
+  void createFourier( );
 
 private slots:
   void RunSim( );
@@ -151,10 +151,11 @@ private slots:
 
   void on_initDirectionComboBox_currentIndexChanged(int index);
 
-  void on_saveHistsPushButton_toggled(bool checked);
-
   void SaveHists(QString fileName);
 
+  void on_saveHistsPushButton_clicked( );
+  void PrintHist( );
+  void on_runHistScriptPushButton_clicked( );
 private:
   Ui::MainWindow *ui;
 };

@@ -357,7 +357,7 @@ void BoidSim2D::InitBoids(int posIndex, int dirIndex ) {
   boids = vector <Boid> (nrOfBoids);
   avgPosGeom.Zero( );
   P.Zero( );
-  for (int i = 0; i < boids.size( ); i++) {
+  for (uint i = 0; i < boids.size( ); i++) {
     Boid &b = boids[i];
     b.curAngle = 10;
     b.prefAngle = 10;
@@ -611,7 +611,7 @@ void BoidSim2D::MoveBoids( ){
 
       polX += b.v.x;
       polY += b.v.y;
-b.prevAngle = b.curAngle;
+      b.prevAngle = b.curAngle;
       b.convHullNormal.Zero( );
     }
 
@@ -742,7 +742,7 @@ void BoidSim2D::FindConvexHull( ){
   closestParAnglePlus = 10000;
   closestParAngleMin = -10000;
   closestPerpAngle = 10000;
-  double polAngle = P.Theta( );
+  double polAngle = -P.Theta( );
   Vector2D pNorm = P.normalised( );
   for(uint i = 0; i < convexHull.size( ); i++){
     Boid &b = boids[convexHull[i]];
@@ -824,10 +824,10 @@ void BoidSim2D::FindArea( ){
 
 void BoidSim2D::FindHullAngle(Boid &b, Vector2D pNorm, double polAngle, uint boidIndex){
   // find angle between polarisation vector and position on hull wrt the geometric center
-  double theta = (b.r - avgPosGeomOld).Theta( ) - polAngle; // ang of boid in [-2PI, 2PI]
-  theta += (theta > M_PI) ? - M_2PI : ((theta < - M_PI) ? M_2PI : 0);
-  theta += M_PI;
-
+//  double theta = (b.r - avgPosGeomOld).Theta( ) - polAngle; // ang of boid in [-2PI, 2PI]
+//  theta += (theta > M_PI) ? - M_2PI : ((theta < - M_PI) ? M_2PI : 0);
+//  theta += M_PI;
+  double theta = (b.r - avgPosGeomOld).Rotated(polAngle).Theta( ) + M_PI;
   /*
     if (theta >= 0 && theta < closestParAnglePlus) { // found new boid closest to polarization direction
     closestParAnglePlus = theta;
@@ -955,6 +955,16 @@ void BoidSim2D::Vector2D::Rotate(double theta){
   this->x = xtemp * c - ytemp * s;
   this->y = xtemp * s + ytemp * c;
 } // Rotate
+
+BoidSim2D::Vector2D BoidSim2D::Vector2D::Rotated(double theta){
+  this->Rotate(theta);
+  return this;
+} // Rotated
+
+BoidSim2D::Vector2D BoidSim2D::Vector2D::rotated(double theta){
+  Vector2D temp = this;
+  return temp.Rotated(theta);
+} // Rotated
 
 void BoidSim2D::Vector2D::RandNorm(BoidSim2D* parent, mt19937* rng){
   double nT = parent->rand2Pi(*rng);

@@ -5,7 +5,7 @@
 #include <QString>
 #include <QWidget>
 #include <QComboBox>
-
+#include <qcustomplot.h>
 #include "FFTw/include/fftw3.h"
 #include "boidsim2d.h"
 
@@ -29,7 +29,7 @@ class FFT : public QMainWindow
   fftw_plan plan;
 
 protected:
-  void closeEvent();
+  void closeEvent(QCloseEvent *event);
 public:
   int idNr;
   BoidSim2D* sim;
@@ -39,7 +39,7 @@ public:
   ~FFT();
 
 signals:
-  void GetsClosed(int idNr);
+  void FourierGetsClosed(int idNr);
 
 private slots:
   void PlotFFT( );
@@ -50,6 +50,10 @@ private slots:
   void on_fftPushButton_clicked( );
   void on_printPushButton_clicked( );
   void PrintFunction(QComboBox* comboBox, QString fileName);
+  void on_logXCheckBox_clicked(bool checked);
+
+  void on_logYCheckBox_clicked(bool checked);
+  void PlotSetLog(bool axis, bool checked, QCustomPlot* plot);
 private:
   Ui::FFT *ui;
 };

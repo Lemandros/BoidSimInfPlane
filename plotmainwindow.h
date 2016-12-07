@@ -25,7 +25,7 @@ public:
   QCustomPlot *plot;
 
 protected:
-  void closeEvent();
+  void closeEvent(QCloseEvent *event);
 
 private:
   Ui::PlotMainWindow *ui;
@@ -45,7 +45,7 @@ public slots:
   void PlotAll(QCustomPlot* plot, QComboBox* comboBox, QSpinBox* minSpin, QSpinBox* maxSpin);
   void PlotFunction(QCustomPlot* plot, QComboBox* comboBox, QSpinBox* minSpin, QSpinBox* maxSpin);
 signals:
-  void GetsClosed(int idNr);
+  void PlotGetsClosed(int idNr);
 
 private slots:
   void on_plotComboBox_currentIndexChanged(int index);

@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="sizePolicy">
-   <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
     <horstretch>0</horstretch>
     <verstretch>0</verstretch>
    </sizepolicy>
@@ -20,179 +20,193 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QWidget" name="layoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>0</x>
-      <y>10</y>
-      <width>631</width>
-      <height>502</height>
-     </rect>
-    </property>
-    <layout class="QHBoxLayout" name="plotHorizontalLayout">
-     <item>
-      <layout class="QVBoxLayout" name="plotVerticalLayout" stretch="0,0,0,0,0,0,0,0,0,0,0,0,0">
-       <item>
-        <widget class="QComboBox" name="fftComboBox">
-         <property name="maximumSize">
-          <size>
-           <width>128</width>
-           <height>16777215</height>
-          </size>
-         </property>
-         <property name="currentIndex">
-          <number>0</number>
-         </property>
-         <item>
-          <property name="text">
-           <string>PolTotal</string>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="0">
+     <layout class="QHBoxLayout" name="plotHorizontalLayout">
+      <item>
+       <layout class="QVBoxLayout" name="plotVerticalLayout" stretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0">
+        <item>
+         <widget class="QComboBox" name="fftComboBox">
+          <property name="maximumSize">
+           <size>
+            <width>128</width>
+            <height>16777215</height>
+           </size>
           </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>PolBulk</string>
+          <property name="currentIndex">
+           <number>0</number>
           </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>PolHull</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>Boid</string>
-          </property>
-         </item>
-        </widget>
-       </item>
-       <item>
-        <widget class="QSpinBox" name="boidSelectorSpinBox">
-         <property name="prefix">
-          <string>Boid:</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="xCoordCheckBox">
-         <property name="text">
-          <string>X-coordinate</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="yCoordCheckBox">
-         <property name="text">
-          <string>Y-coordinate</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="thetaCheckBox">
-         <property name="text">
-          <string>Theta</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="radiusCheckBox">
-         <property name="text">
-          <string>Distance to GC</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QSpinBox" name="plotMinSpinBox"/>
-       </item>
-       <item>
-        <layout class="QHBoxLayout" name="plotMaxHorizontalLayout">
-         <item>
-          <widget class="QSpinBox" name="plotMaxSpinBox">
-           <property name="minimum">
-            <number>1</number>
-           </property>
-           <property name="maximum">
-            <number>99</number>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="plotMaxPushButton">
-           <property name="maximumSize">
-            <size>
-             <width>16</width>
-             <height>16777215</height>
-            </size>
-           </property>
+          <item>
            <property name="text">
-            <string>+</string>
+            <string>PolTotal</string>
            </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <widget class="QPushButton" name="setupPushButton">
-         <property name="text">
-          <string>Setup</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="fftPushButton">
-         <property name="text">
-          <string>FFT</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLineEdit" name="fftLineEdit"/>
-       </item>
-       <item>
-        <widget class="QPushButton" name="printPushButton">
-         <property name="maximumSize">
-          <size>
-           <width>128</width>
-           <height>16777215</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>Print to file</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <spacer name="plotVerticalSpacer">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-      </layout>
-     </item>
-     <item>
-      <widget class="QCustomPlot" name="plotWidget" native="true">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
-         <horstretch>5</horstretch>
-         <verstretch>5</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="minimumSize">
-        <size>
-         <width>500</width>
-         <height>500</height>
-        </size>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </widget>
+          </item>
+          <item>
+           <property name="text">
+            <string>PolBulk</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>PolHull</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Boid</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSpinBox" name="boidSelectorSpinBox">
+          <property name="prefix">
+           <string>Boid:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="xCoordCheckBox">
+          <property name="text">
+           <string>X-coordinate</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="yCoordCheckBox">
+          <property name="text">
+           <string>Y-coordinate</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="thetaCheckBox">
+          <property name="text">
+           <string>Theta</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="radiusCheckBox">
+          <property name="text">
+           <string>Distance to GC</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSpinBox" name="plotMinSpinBox"/>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="plotMaxHorizontalLayout">
+          <item>
+           <widget class="QSpinBox" name="plotMaxSpinBox">
+            <property name="minimum">
+             <number>1</number>
+            </property>
+            <property name="maximum">
+             <number>99</number>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="plotMaxPushButton">
+            <property name="maximumSize">
+             <size>
+              <width>16</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>+</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QPushButton" name="setupPushButton">
+          <property name="text">
+           <string>Setup</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="fftPushButton">
+          <property name="text">
+           <string>FFT</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="fftLineEdit"/>
+        </item>
+        <item>
+         <widget class="QPushButton" name="printPushButton">
+          <property name="maximumSize">
+           <size>
+            <width>128</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Print to file</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="logXCheckBox">
+          <property name="text">
+           <string>Log X</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="logYCheckBox">
+          <property name="text">
+           <string>Log Y</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="plotVerticalSpacer">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QCustomPlot" name="plotWidget" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+          <horstretch>5</horstretch>
+          <verstretch>5</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>500</width>
+          <height>500</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">

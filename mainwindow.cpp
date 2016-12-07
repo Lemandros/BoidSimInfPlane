@@ -81,7 +81,7 @@ void MainWindow::closeEvent() {
 } // closeEvent
 
 void MainWindow::ClosePlotWindow(int idNr) {
-  qDebug( ) << "ClosePlotWindow! idNr =" << idNr;
+  //qDebug( ) << "ClosePlotWindow! idNr =" << idNr;
   for (uint i = 0; i < plotMainWindows.size( ); i++)
     if (plotMainWindows[i]->idNr == idNr) { // we got him
       delete plotMainWindows[i];
@@ -794,15 +794,14 @@ void MainWindow::on_vNoughtSpinBox_valueChanged(double arg1){
 void MainWindow::createPlot( ){
 
   int idNr = (plotMainWindows.size( ) == 0) ? 0 : plotMainWindows.back( )->idNr + 1;
+
   PlotMainWindow * plotMainWindow;
   plotMainWindow = new PlotMainWindow(this, defaultPath, sim, idNr);
   plotMainWindow->show( );
 
-  QMainWindow::connect(plotMainWindow, SIGNAL(GetsClosed(int)), SLOT(ClosePlotWindow(int)));
+  QMainWindow::connect(plotMainWindow, SIGNAL(PlotGetsClosed(int)), SLOT(ClosePlotWindow(int)));
 
   this->plotMainWindows.push_back(plotMainWindow);
-    //plotMainWindow->show( );
-
 } // createPlot
 
 void MainWindow::createFourier( ){
@@ -811,7 +810,7 @@ void MainWindow::createFourier( ){
   fourierWindow = new FFT(this, defaultPath, sim, idNr);
   fourierWindow->show( );
 
-  QMainWindow::connect(fourierWindow, SIGNAL(GetsClosed(int)), SLOT(CloseFourierWindow(int)));
+  QMainWindow::connect(fourierWindow, SIGNAL(FourierGetsClosed(int)), SLOT(CloseFourierWindow(int)));
 
   this->fourierWindows.push_back(fourierWindow);
 } // createFourier
@@ -1033,6 +1032,7 @@ QString oldFileName = "/net/zilcken/data1/InfPlane/VarForceEta0.10/Stationary/Bo
      // oldFileName = datFileName + ".boidInf";
       SaveData(datFileName + ".dat");
       SaveCheckPoint(datFileName + ".boidInf");
+      SaveHists(datFileName + ".boidHists");
     } // for j
     qDebug( ) << "Done with inner loop, i" << i;
   } // for i
@@ -1061,6 +1061,8 @@ void MainWindow::PrintHist( ){
       } // if
     } // for j
     SaveHists(fileNames[i] + ".boidHists");
+    SaveData(fileNames[i] + ".dat");
+    SaveCheckPoint(fileNames[i] + ".boidInf");
   } // for i
 
 } // PrintHist

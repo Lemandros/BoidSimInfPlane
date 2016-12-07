@@ -2,6 +2,7 @@
 #include "ui_fft.h"
 #include <boidsim2d.h>
 #include <FFTw/include/fftw3.h>
+#include <qcustomplot.h>
 FFT::FFT(QWidget *parent, QString defaultPath, BoidSim2D* sim, int idNr) :
   QMainWindow(parent),
   ui(new Ui::FFT)
@@ -31,6 +32,9 @@ FFT::FFT(QWidget *parent, QString defaultPath, BoidSim2D* sim, int idNr) :
   plotColours.push_back(QPen(QColor(0,255,0)));
   plotColours.push_back(QPen(QColor(0,0,255)));
   plotColours.push_back(QPen(QColor(0,0,0)));
+  in = (double*) fftw_malloc(sizeof(double) * 1);
+  out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) *1);
+  plan = fftw_plan_dft_r2c_1d(1,in,out,FFTW_ESTIMATE);
 } // constructor
 
 FFT::~FFT()
@@ -39,10 +43,10 @@ FFT::~FFT()
 
 } // destructor
 
-void FFT::closeEvent() {
-  // qDebug( ) << "fourierWindow" << idNr << "is getting closed!";
+void FFT::closeEvent(QCloseEvent *event) {
+   qDebug( ) << "fourierWindow" << idNr << "is getting closed!";
   this->ui->plotWidget->clearGraphs( );
-
+ qDebug( ) << "a";
   //delete [] in;
   //delete [] out;
 
@@ -52,7 +56,7 @@ void FFT::closeEvent() {
   fftw_free(in);
   fftw_free(out);
   fftw_cleanup( );
-  emit GetsClosed(idNr);
+  emit FourierGetsClosed(idNr);
 } // closeEvent
 
 void FFT::SetUp( ){
@@ -64,6 +68,8 @@ void FFT::SetUp( ){
   N = end - start + 1;
 
   fouriers.clear( );
+  fftw_free(in);
+  fftw_free(out);
   in = (double*) fftw_malloc(sizeof(double) * N);
   out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) *N);
 
@@ -96,7 +102,7 @@ void FFT::PlotFFT( ){
     ui->plotWidget->graph(0)->setPen(plotColours[fouriers[i]]);
     ui->plotWidget->graph(i)->setName(titles[fouriers[i]]);
 
-    for(uint j = 0; j < N; j++)
+    for(uint j = 0; j < N / 2 + 1; j++)
       ui->plotWidget->graph(i)->addData(double(j), outputData[fouriers[i]][j]);
   } // for i
   ui->plotWidget->rescaleAxes( );
@@ -172,3 +178,47 @@ void FFT::PrintFunction(QComboBox* comboBox, QString fileName){
         break;
     } // switch
 } // PrintFunction
+
+void FFT::on_logXCheckBox_clicked(bool checked){
+    PlotSetLog(true, checked, ui->plotWidget);
+} // on_logXCheckBox_clicked
+
+void FFT::on_logYCheckBox_clicked(bool checked){
+    PlotSetLog(false, checked, ui->plotWidget);
+} // on_logYCheckBox_clicked
+
+void FFT::PlotSetLog(bool axis, bool checked, QCustomPlot* plot){
+  if(axis){
+      if(checked){
+        QSharedPointer<QCPAxisTickerLog> logTicker(new QCPAxisTickerLog);
+        plot->xAxis->setTicker(logTicker);
+        plot->xAxis->setScaleType(QCPAxis::stLogarithmic);
+        plot->xAxis->setNumberPrecision(0);
+        plot->xAxis->setNumberFormat("eb");
+      } // if checked
+      else{
+        QSharedPointer<QCPAxisTicker> normTicker(new QCPAxisTicker);
+        plot->xAxis->setTicker(normTicker);
+        plot->xAxis->setScaleType(QCPAxis::stLinear);
+        plot->xAxis->setNumberPrecision(8);
+        plot->xAxis->setNumberFormat("gb");
+      } // else checked
+  } // if axis
+  else{
+    if(checked){
+      QSharedPointer<QCPAxisTickerLog> logTicker(new QCPAxisTickerLog);
+      plot->yAxis->setTicker(logTicker);
+      plot->yAxis->setScaleType(QCPAxis::stLogarithmic);
+      plot->yAxis->setNumberPrecision(0);
+      plot->yAxis->setNumberFormat("eb");
+    } // if checked
+    else{
+      QSharedPointer<QCPAxisTicker> normTicker(new QCPAxisTicker);
+      plot->yAxis->setTicker(normTicker);
+      plot->yAxis->setScaleType(QCPAxis::stLinear);
+      plot->yAxis->setNumberPrecision(8);
+      plot->yAxis->setNumberFormat("gb");
+    } // else checked
+  }// else axis
+  plot->replot( );
+} // PlotSetLog

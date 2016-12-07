@@ -28,14 +28,14 @@ PlotMainWindow::PlotMainWindow(QWidget *parent, QString defaultPath, BoidSim2D *
 } // PlotMainWindow
 
 PlotMainWindow::~PlotMainWindow( ) {
-  // qDebug( ) << "PlotMainwWindow destroyed";
+  //qDebug( ) << "PlotMainwWindow destroyed";
   delete ui;
 } // ~PlotMainWindow
 
-void PlotMainWindow::closeEvent( ) {
-  // qDebug( ) << "PlotMainwWindow" << idNr << "is getting closed!";
+void PlotMainWindow::closeEvent(QCloseEvent *event) {
+  qDebug( ) << "PlotMainwWindow" << idNr << "is getting closed!";
   this->ui->plotWidget->clearGraphs( );
-  emit GetsClosed(idNr);
+  emit PlotGetsClosed(idNr);
 } // closeEvent
 
 void PlotMainWindow::UpdateWindow( ) {
@@ -283,6 +283,62 @@ void PlotMainWindow::PlotFunction(QCustomPlot* plot, QComboBox* comboBox, QSpinB
   } // else if
 
   plot->replot( );
+
+  if(comboBox->currentIndex( ) < 10){
+    double y1Min = 0.0;
+    double y1Max = 0.0;
+    double y2Min = 0.0;
+    double y2Max = 0.0;
+    switch(comboBox->currentIndex( )){
+    case 0:
+      y1Min = sim->convHullAreaVec[ui->plotMinSpinBox->value( )];
+      y1Max = sim->convHullAreaVec[ui->plotMaxSpinBox->value( )];
+      break;
+    case 1:
+      y1Min = abs(sim->curvatureVec[ui->plotMinSpinBox->value( )]);
+      y1Max = abs(sim->curvatureVec[ui->plotMaxSpinBox->value( )]);
+      break;
+    case 2:
+      y1Min = abs(sim->curvatureBulkVec[ui->plotMinSpinBox->value( )]);
+      y1Max = abs(sim->curvatureBulkVec[ui->plotMaxSpinBox->value( )]);
+      break;
+    case 3:
+      y1Min = abs(sim->curvatureHullVec[ui->plotMinSpinBox->value( )]);
+      y1Max = abs(sim->curvatureHullVec[ui->plotMaxSpinBox->value( )]);
+      break;
+    case 4:
+      y1Min = sim->p[ui->plotMinSpinBox->value( )].Length( );
+      y1Max = sim->p[ui->plotMaxSpinBox->value( )].Length( );
+      break;
+    case 5:
+      y1Min = sim->p[ui->plotMinSpinBox->value( )].x;
+      y1Max = sim->p[ui->plotMaxSpinBox->value( )].x;
+      y2Min = sim->p[ui->plotMinSpinBox->value( )].y;
+      y2Max = sim->p[ui->plotMaxSpinBox->value( )].y;
+      break;
+    case 6:
+      y1Min = sim->pBulk[ui->plotMinSpinBox->value( )].Length( );
+      y1Max = sim->pBulk[ui->plotMaxSpinBox->value( )].Length( );
+      break;
+    case 7:
+      y1Min = sim->pBulk[ui->plotMinSpinBox->value( )].x;
+      y1Max = sim->pBulk[ui->plotMaxSpinBox->value( )].x;
+      y2Min = sim->pBulk[ui->plotMinSpinBox->value( )].y;
+      y2Max = sim->pBulk[ui->plotMaxSpinBox->value( )].y;
+      break;
+    case 8:
+      y1Min = sim->pHull[ui->plotMinSpinBox->value( )].Length( );
+      y1Max = sim->pHull[ui->plotMaxSpinBox->value( )].Length( );
+      break;
+    case 9:
+      y1Min = sim->pHull[ui->plotMinSpinBox->value( )].x;
+      y1Max = sim->pHull[ui->plotMaxSpinBox->value( )].x;
+      y2Min = sim->pHull[ui->plotMinSpinBox->value( )].y;
+      y2Max = sim->pHull[ui->plotMaxSpinBox->value( )].y;
+      break;
+    } // switch
+    ui->statusbar->showMessage("y1 = " + QString::number(y1Min) + " Y1 = " + QString::number(y1Max) + " y2 = " + QString::number(y2Min) + " Y2 = " + QString::number(y2Max));
+  }
 } // plotFunction
 
 void PlotMainWindow::on_plotComboBox_currentIndexChanged(int index){

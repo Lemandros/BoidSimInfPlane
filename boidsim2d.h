@@ -1,6 +1,6 @@
 #ifndef BOIDSIM2D_H
 #define BOIDSIM2D_H
-
+#include <FFTw/include/fftw3.h>
 #include <vector>
 #include <QImage>
 #include <utility>

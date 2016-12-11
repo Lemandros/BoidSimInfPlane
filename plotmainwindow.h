@@ -3,10 +3,10 @@
 
 #include <QMainWindow>
 #include <QWidget>
-
+#include <FFTw/include/fftw3.h>
 #include "qcustomplot.h"
 #include "boidsim2d.h"
-
+#include "fft.h"
 namespace Ui {
 class PlotMainWindow;
 }
@@ -18,6 +18,7 @@ class PlotMainWindow : public QMainWindow
 public:
   int idNr;
   BoidSim2D* sim;
+  std::vector <FFT*> fourierWindows;
   QString defaultPath;
   QWidget* parent;
   explicit PlotMainWindow(QWidget *parent = 0, QString defaultPath = "", BoidSim2D* sim = 0, int idNr = 0);
@@ -44,12 +45,17 @@ public slots:
   void PrintFunction(QComboBox* comboBox, QSpinBox* minSpin, QSpinBox* maxSpin, QString fileName);
   void PlotAll(QCustomPlot* plot, QComboBox* comboBox, QSpinBox* minSpin, QSpinBox* maxSpin);
   void PlotFunction(QCustomPlot* plot, QComboBox* comboBox, QSpinBox* minSpin, QSpinBox* maxSpin);
+
+  void createFourier( );
+  void CloseFourierWindow(int idNr);
+
 signals:
   void PlotGetsClosed(int idNr);
 
 private slots:
   void on_plotComboBox_currentIndexChanged(int index);
   void on_boidSelectorSpinBox_valueChanged(int arg1);
+  void on_fftPushButton_clicked();
 };
 
 #endif // PLOTMAINWINDOW_H

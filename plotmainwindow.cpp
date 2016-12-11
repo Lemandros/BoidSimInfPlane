@@ -1,6 +1,6 @@
 #include "plotmainwindow.h"
 #include "ui_plotmainwindow.h"
-
+#include <FFTw/include/fftw3.h>
 #include <QDebug>
 #include <fstream>
 #include <cmath>
@@ -35,6 +35,8 @@ PlotMainWindow::~PlotMainWindow( ) {
 void PlotMainWindow::closeEvent(QCloseEvent *event) {
   qDebug( ) << "PlotMainwWindow" << idNr << "is getting closed!";
   this->ui->plotWidget->clearGraphs( );
+  for(uint i = 0; i < fourierWindows.size( ); i++)
+    CloseFourierWindow(fourierWindows[i]->idNr);
   emit PlotGetsClosed(idNr);
 } // closeEvent
 
@@ -363,3 +365,38 @@ void PlotMainWindow::on_plotComboBox_currentIndexChanged(int index){
 void PlotMainWindow::on_boidSelectorSpinBox_valueChanged(int arg1){
     on_plotPlotAllPushButton_clicked( );
 } // on_boidSelectorSpinBox_valuechanged
+
+
+void PlotMainWindow::createFourier( ){
+  int fftIdNr = (fourierWindows.size( ) == 0) ? 0 : fourierWindows.back( )->idNr + 1;
+  FFT * fourierWindow;
+  int type = 0;
+  if(ui->plotComboBox->currentIndex( ) == 4 || ui->plotComboBox->currentIndex( )  == 5) type = 0;
+  if(ui->plotComboBox->currentIndex( ) == 6 || ui->plotComboBox->currentIndex( )  == 7) type = 1;
+  if(ui->plotComboBox->currentIndex( ) == 8 || ui->plotComboBox->currentIndex( )  == 9) type = 2;
+  if(ui->plotComboBox->currentIndex( )  == 10) type = 3;
+  int boidNr = (type == 3) ? ui->boidSelectorSpinBox->value( ) : -1;
+  fourierWindow = new FFT(defaultPath, this, sim, idNr, fftIdNr, ui->plotMinSpinBox->value( ),
+                          ui->plotMaxSpinBox->value( ), type, boidNr);
+  fourierWindow->show( );
+
+  QMainWindow::connect(fourierWindow, SIGNAL(FourierGetsClosed(int)), SLOT(CloseFourierWindow(int)));
+
+  this->fourierWindows.push_back(fourierWindow);
+} // createFourier
+
+void PlotMainWindow::CloseFourierWindow(int idNr) {
+  qDebug( ) << "CloseFourierWindow! idNr =" << idNr;
+  for (uint i = 0; i < fourierWindows.size( ); i++)
+    if (fourierWindows[i]->idNr == idNr) { // we got him
+      delete fourierWindows[i];
+      fourierWindows[i] = NULL; // just in case
+      fourierWindows.erase(fourierWindows.begin( ) + i);
+      return;
+    } // if
+} // ClosePlotWindow
+
+
+void PlotMainWindow::on_fftPushButton_clicked( ){
+    createFourier( );
+} // on_fftPushButton_clicked

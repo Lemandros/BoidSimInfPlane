@@ -124,7 +124,7 @@ void MainWindow::noisePressed(bool checked){
 void MainWindow::loadPressed( ){
   QString fileName = QFileDialog::getOpenFileName(this, tr("Open boid config"), defaultPath, tr("BoidInf Files (*.boidinf)"));
   if(!fileName.isEmpty( ))
-    LoadCheckPoint(fileName);
+    LoadCheckPoint(fileName, true);
 } // loadPressed
 
 void MainWindow::savePressed( ){
@@ -388,7 +388,7 @@ void MainWindow::SaveCheckPoint(QString fileName){
   file.close( );
 } // saveCheckPoint
 
-void MainWindow::LoadCheckPoint(QString fileName){
+void MainWindow::LoadCheckPoint(QString fileName, bool hists){
   ifstream file(fileName.toStdString( ));
 
   string header;
@@ -439,10 +439,11 @@ void MainWindow::LoadCheckPoint(QString fileName){
   uint nrBins;
   lineStream1 >> nrBins;
 
-  if(nrBins != 0){
+  if(nrBins != 0 && hists){
     sim->angHist.clear( );
     sim->componentHist.clear( );
     sim->dAngleHist.clear( );
+    sim->radiusHist.clear( );
   }
 
   string groupInfo;
@@ -521,33 +522,36 @@ void MainWindow::LoadCheckPoint(QString fileName){
     sim->pHull.push_back(BoidSim2D::Vector2D(x, y));
   } // for
 
-  for(uint i = 0; i < nrBins; i++){
-    string angleInfo;
-    getline(file, angleInfo);
-    istringstream lineStream4(angleInfo);
-    int dAngleCount;
-    double counts, dAngleSum;
-    string parallelCountStr, transverseCountStr;
-    lineStream4 >> counts;
-    lineStream4 >> parallelCountStr;
-    lineStream4 >> transverseCountStr;
+  if(hists){
+    for(uint i = 0; i < nrBins; i++){
+      string angleInfo;
+      getline(file, angleInfo);
+      istringstream lineStream4(angleInfo);
+      int dAngleCount;
+      double counts, dAngleSum;
+      string parallelCountStr, transverseCountStr;
+      lineStream4 >> counts;
+      lineStream4 >> parallelCountStr;
+      lineStream4 >> transverseCountStr;
 
-    lineStream4 >> dAngleCount;
-    lineStream4 >> dAngleSum;
-    sim->angHist.push_back(counts);
-    sim->componentHist.push_back(pair<double, double> (stod(parallelCountStr), stod(transverseCountStr)));
-    sim->dAngleHist.push_back(pair<uint, double> (dAngleCount, dAngleSum));
-  }
-  for(uint i = 0; i < nrBins; i++){
-    if(sim->componentHist[i].first != sim->componentHist[i].first){
-      double parallelPrev = (i == 0) ? sim->componentHist.back( ).first : sim->componentHist[i - 1].first;
-      double parallelNext = (i == nrBins - 1) ? sim->componentHist.front( ).first : sim->componentHist[i + 1].first;
-      double transversePrev = (i == 0) ? sim->componentHist.back( ).second : sim->componentHist[i - 1].second;
-      double transverseNext = (i == nrBins - 1) ? sim->componentHist.front( ).second : sim->componentHist[i + 1].second;
-      sim->componentHist[i].first = (parallelPrev + parallelNext) / 2.0;
-      sim->componentHist[i].second = (transversePrev + transverseNext) / 2.0;
-    }
-  }
+      lineStream4 >> dAngleCount;
+      lineStream4 >> dAngleSum;
+      sim->angHist.push_back(counts);
+      sim->componentHist.push_back(pair<double, double> (stod(parallelCountStr), stod(transverseCountStr)));
+      sim->dAngleHist.push_back(pair<uint, double> (dAngleCount, dAngleSum));
+    } // for
+
+    for(uint i = 0; i < nrBins; i++){
+      if(sim->componentHist[i].first != sim->componentHist[i].first){
+        double parallelPrev = (i == 0) ? sim->componentHist.back( ).first : sim->componentHist[i - 1].first;
+        double parallelNext = (i == nrBins - 1) ? sim->componentHist.front( ).first : sim->componentHist[i + 1].first;
+        double transversePrev = (i == 0) ? sim->componentHist.back( ).second : sim->componentHist[i - 1].second;
+        double transverseNext = (i == nrBins - 1) ? sim->componentHist.front( ).second : sim->componentHist[i + 1].second;
+        sim->componentHist[i].first = (parallelPrev + parallelNext) / 2.0;
+        sim->componentHist[i].second = (transversePrev + transverseNext) / 2.0;
+      } // for
+    } // for
+  } // if hists
   file.close( );
 
   sim->FindGeometry( );
@@ -563,7 +567,7 @@ void MainWindow::LoadKeepCurrParams(QString fileName){
   double eta = ui->etaSpinBox->value( );
   double gamma = ui->forceConstantSpinBox->value( );
   vector <pair <uint, double>> informedGroupsTemp = informedGroups;
-  LoadCheckPoint(fileName);
+  LoadCheckPoint(fileName, true);
   ui->vNoughtSpinBox->setValue(vNought);
   ui->rhoSpinBox->setValue(rho);
   ui->etaSpinBox->setValue(eta);
@@ -1050,7 +1054,7 @@ void MainWindow::PrintHist( ){
   uint stepsPerUpdate = 100;
   for(uint i = 0; i < fileNames.size( ); i++){
     Init( );
-    LoadCheckPoint(fileNames[i] + ".boidInf");
+    LoadCheckPoint(fileNames[i] + ".boidInf",false);
     on_emptyHistsPushButton_clicked( );
     for(uint j = 0; j < timeStepsToRun; j++){
       sim->NextStep( );

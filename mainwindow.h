@@ -81,7 +81,7 @@ private slots:
   void SaveData(QString fileName);
   QString FileName( );
 
-  void LoadCheckPoint(QString fileName);
+  void LoadCheckPoint(QString fileName, bool hists);
   void LoadKeepCurrParams(QString fileName);
   void on_zoomSlider_valueChanged(int value);
 

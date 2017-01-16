@@ -10,5 +10,8 @@
         <file>images/script.png</file>
         <file>images/addplot.png</file>
         <file>images/fft.png</file>
+        <file>images/data.png</file>
+        <file>images/saveall.png</file>
+        <file>images/savehists.png</file>
     </qresource>
 </RCC>

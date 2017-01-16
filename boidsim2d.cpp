@@ -16,6 +16,7 @@
 #include <istream>
 #include <iostream>
 #include <qmath.h>
+#include <random>
 #include <float.h>
 #define M_2PI      6.28318530717958647692
 
@@ -142,6 +143,7 @@ QImage BoidSim2D::ToQImage(uint size, bool antiAliasing) {
 //  } // for
 
   //draw boids (and directions if true)
+
   for (Boid & b : boids){
     if(drawBoids){
       if(b.prefAngle == 0.0)
@@ -157,8 +159,8 @@ QImage BoidSim2D::ToQImage(uint size, bool antiAliasing) {
     if(b.trackAngles == trackBoidTrail && drawBoidTrail){
 
       uint nrOfTrails;
-      if(nrOfTrailPoints >= t)
-        nrOfTrails = t;
+      if(nrOfTrailPoints > anglesHistory[trackBoidTrail].size( ))
+        nrOfTrails = anglesHistory[trackBoidTrail].size( );
       else nrOfTrails = nrOfTrailPoints;
 
       boidPen.setColor(QColor(0, 0, 0, 200));
@@ -348,8 +350,59 @@ void BoidSim2D::CalcP( ) {
   p.push_back(P);
   pHull.push_back(Phull);
   pBulk.push_back(Pbulk);
-
+  polCumAvg.push_back(P.Length( ));
+  polBulkCumAvg.push_back(Pbulk.Length( ));
+  polHullCumAvg.push_back(Phull.Length( ));
+  Pold = P;
+  curvCumAvg.push_back(0.0);
+  curvHullCumAvg.push_back(0.0);
+  curvBulkCumAvg.push_back(0.0);
 } // P
+
+void BoidSim2D::CalcCumAvg(uint begin){
+  if(begin == 0)
+    begin = 1;
+
+  polCumAvg.clear( );
+  polBulkCumAvg.clear( );
+  polHullCumAvg.clear( );
+
+  curvCumAvg.clear( );
+  curvBulkCumAvg.clear( );
+  curvHullCumAvg.clear( );
+
+  polCumAvg.push_back(p[begin-1].Length( ));
+  polBulkCumAvg.push_back(pBulk[begin-1].Length( ));
+  polHullCumAvg.push_back(pHull[begin-1].Length( ));
+
+  curvCumAvg.push_back(curvatureVec[begin-1]);
+  curvBulkCumAvg.push_back(curvatureBulkVec[begin-1]);
+  curvHullCumAvg.push_back(curvatureHullVec[begin-1]);
+
+  for(uint i = begin; i < t; i++){
+    polCumAvg.push_back(polCumAvg.back( ) + p[i].Length( ));
+    polBulkCumAvg.push_back(polBulkCumAvg.back( ) + pBulk[i].Length( ));
+    polHullCumAvg.push_back(polHullCumAvg.back( ) + pHull[i].Length( ));
+
+    curvCumAvg.push_back(curvCumAvg.back( ) + curvatureVec[i]);
+    curvBulkCumAvg.push_back(curvBulkCumAvg.back( ) + curvatureBulkVec[i]);
+    curvHullCumAvg.push_back(curvHullCumAvg.back( ) + curvatureHullVec[i]);
+  } // for
+} // CalcCumAvg
+
+void BoidSim2D::InitTrackedBoids( ){
+  for(uint i = 0; i < nrOfBoids; i++){
+    Boid &b = boids[i];
+    if(anglesHistory.size( ) > nrOfBoidsToTrack && b.trackAngles > nrOfBoidsToTrack - 1){
+      b.trackAngles = -10;
+      anglesHistory.pop_back( );
+    }
+    else if(anglesHistory.size( ) < nrOfBoidsToTrack && b.trackAngles == -10){
+      b.trackAngles = nrOfBoidsToTrack - 1;
+      anglesHistory.push_back(vector<Vector2D> {b.r});
+    }
+  } // for
+} // InitTrackedBoids
 
 void BoidSim2D::InitBoids(int posIndex, int dirIndex ) {
   // Initialises the position and velocity vectors of boids
@@ -524,7 +577,6 @@ void BoidSim2D::Interact( ){
 // computes next positions and velocities of boids
 void BoidSim2D::MoveBoids( ){
 
-    Vector2D Pold = p.back( );
     double PoldTheta = Pold.Theta( );
     int hullCount = 0;
     int bulkCount = 0;
@@ -638,22 +690,31 @@ void BoidSim2D::MoveBoids( ){
     p.push_back(P);
     temp2.Normalise( );
     temp.Normalise( );
-    curvatureVec.push_back(temp.CrossProduct(temp2));
+    double curv = temp.CrossProduct(temp2);
+    curvatureVec.push_back(curv);
 
     temp = pHull.back( );
     temp2 = Phull;
     pHull.push_back(Phull);
     temp.Normalise( );
     temp2.Normalise( );
-    curvatureHullVec.push_back(temp.CrossProduct(temp2));
+    double curvHull = temp.CrossProduct(temp2);
+    curvatureHullVec.push_back(curvHull);
 
     temp = pBulk.back( );
     temp2 = Pbulk;
     pBulk.push_back(Pbulk);
     temp.Normalise( );
     temp2.Normalise( );
-    curvatureBulkVec.push_back(temp.CrossProduct(temp2));
+    double curvBulk = temp.CrossProduct(temp2);
+    curvatureBulkVec.push_back(curvBulk);
 
+    polCumAvg.push_back(polCumAvg.back( ) + P.Length( ));
+    polBulkCumAvg.push_back(polBulkCumAvg.back( ) + Pbulk.Length( ));
+    polHullCumAvg.push_back(polHullCumAvg.back( ) + Phull.Length( ));
+    curvCumAvg.push_back(curvCumAvg.back( ) + curv);
+    curvHullCumAvg.push_back(curvHullCumAvg.back( ) + curvHull);
+    curvBulkCumAvg.push_back(curvBulkCumAvg.back( ) + curvBulk);
 } // MoveBoids
 
 // perform the simulation one timestep
@@ -739,9 +800,9 @@ void BoidSim2D::FindConvexHull( ){
   avgPosGeom.Zero( );
   convHullLength = 0.0;
   maxSep = 0.0;
-  closestParAnglePlus = 10000;
-  closestParAngleMin = -10000;
-  closestPerpAngle = 10000;
+//  closestParAnglePlus = 10000;
+//  closestParAngleMin = -10000;
+//  closestPerpAngle = 10000;
   double polAngle = -P.Theta( );
   Vector2D pNorm = P.normalised( );
   for(uint i = 0; i < convexHull.size( ); i++){
@@ -773,7 +834,7 @@ void BoidSim2D::FindConvexHull( ){
   if(trackCOM == -1) COM = avgPosGeom;
   convHullArea /= 2.0;
   convHullAreaVec.push_back(convHullArea);
-
+  areaCumAvg.push_back(convHullAreaVec.back( ) + convHullArea);
   nrOfBoidsOnConvHull = k-1;
   numBoidsOnHull.push_back(nrOfBoidsOnConvHull);
 

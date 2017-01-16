@@ -147,8 +147,8 @@ void FFT::PerformFFT(int index){
 
 void FFT::PlotFFT( ){
   ui->plotWidget->clearGraphs( );
-  int min = ui->fftPlotMinSpinBox->value( );
-  int max = ui->fftPlotMaxSpinBox->value( );
+  uint min = ui->fftPlotMinSpinBox->value( );
+  uint max = ui->fftPlotMaxSpinBox->value( );
   for(uint i = 0; i < fouriers.size( ); i++){
     ui->plotWidget->addGraph( );
     ui->plotWidget->graph(i)->setPen(plotColours[fouriers[i]]);

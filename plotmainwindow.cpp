@@ -23,6 +23,8 @@ PlotMainWindow::PlotMainWindow(QWidget *parent, QString defaultPath, BoidSim2D *
   this->setWindowTitle("Plot " + QString::number(idNr));
   this->ui->boidSelectorSpinBox->setVisible(false);
   this->ui->boidSelectorSpinBox->setMaximum(sim->nrOfBoidsToTrack - 1);
+  this->ui->cumBeginSpinBox->setVisible(false);
+  this->ui->cumBeginSpinBox->setMaximum(sim->t-1);
   on_plotPlotAllPushButton_clicked( );
   // qDebug( ) << "PlotMainWindow aangemaakt!" << idNr;
 } // PlotMainWindow
@@ -41,6 +43,8 @@ void PlotMainWindow::closeEvent(QCloseEvent *event) {
 } // closeEvent
 
 void PlotMainWindow::UpdateWindow( ) {
+  ui->cumBeginSpinBox->setMaximum(sim->t-1);
+  ui->plotMaxSpinBox->setMaximum(sim->t);
   if(ui->updateCheckBox->isChecked( ))
     on_plotPlotAllPushButton_clicked( );
 } // UpdateWindow
@@ -110,6 +114,7 @@ void PlotMainWindow::on_plotMinSpinBox_valueChanged(int arg1){
 
 void PlotMainWindow::on_plotMaxSpinBox_valueChanged(int arg1){
   ui->plotMinSpinBox->setMaximum(max(arg1 - 2,0));
+
   ui->plotMaxSpinBox->setMaximum(sim->t);
 
   if(ui->plotMaxSpinBox->hasFocus( ))
@@ -117,7 +122,10 @@ void PlotMainWindow::on_plotMaxSpinBox_valueChanged(int arg1){
 }//on_plotmaxSpinBox_valueChanged
 
 void PlotMainWindow::on_plotMaxPushButton_clicked( ){
-  ui->plotMaxSpinBox->setValue(sim->t);
+  if(ui->plotComboBox->currentIndex( ) > 9 && ui->plotComboBox->currentIndex( ) < 16)
+    ui->plotMaxSpinBox->setValue(sim->t-ui->cumBeginSpinBox->value( ));
+  else
+    ui->plotMaxSpinBox->setValue(sim->t);
 } // on_plotmaxPushButton_clicked
 
 // prints raw data of an observable to plaintext file
@@ -184,7 +192,7 @@ void PlotMainWindow::PlotAll(QCustomPlot* plot, QComboBox* comboBox, QSpinBox* m
   int tempMin = minSpin->value( );
   int tempMax = maxSpin->value( );
   minSpin->setValue(0);
-  maxSpin->setValue(sim->t);
+  maxSpin->setValue(sim->t-1);
   PlotFunction(plot, comboBox, minSpin, maxSpin);
   minSpin->setValue(tempMin);
   maxSpin->setValue(tempMax);
@@ -192,18 +200,25 @@ void PlotMainWindow::PlotAll(QCustomPlot* plot, QComboBox* comboBox, QSpinBox* m
 
 // plot the raw data in one of the 4 plots on the plot tab
 void PlotMainWindow::PlotFunction(QCustomPlot* plot, QComboBox* comboBox, QSpinBox* minSpin, QSpinBox* maxSpin){
+  int min = minSpin->value( );
+  int max = maxSpin->value( );
+  int cumBegin = ui->cumBeginSpinBox->value( ) - 1;
   plot->clearGraphs( );
 
-  if(comboBox->currentIndex( ) < 11){
+  if(comboBox->currentIndex( ) < 18){
     plot->addGraph( );
-    if(comboBox->currentIndex( ) == 9 || comboBox->currentIndex( ) == 5 || comboBox->currentIndex( ) == 7){
+    if(comboBox->currentIndex( ) == 9 || comboBox->currentIndex( ) == 5 || comboBox->currentIndex( ) == 7){ // components of Pol
       plot->addGraph( );
-      plot->graph(0)->setPen(QPen(Qt::red));
+      plot->graph(0)->setPen(QPen(Qt::red)); // colour x-component red
     }
-    plot->xAxis->setTicker(QSharedPointer<QCPAxisTicker>(new QCPAxisTicker));
-    plot->graph()->setLineStyle(QCPGraph::lsNone);
-    plot->graph( )->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc,QPen(Qt::NoPen),QBrush(Qt::NoBrush),1.0));
-    for(int i = minSpin->value( ); i < maxSpin->value( ); i++){
+    plot->xAxis->setTicker(QSharedPointer<QCPAxisTicker>(new QCPAxisTicker)); // set x axis to normal tickers
+
+    if(comboBox->currentIndex( ) == 17){
+      plot->graph( )->setLineStyle(QCPGraph::lsNone);
+      plot->graph( )->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc,QPen(Qt::NoPen),QBrush(Qt::NoBrush),1.0));
+    } // if
+
+    for(int i = min; i < max; i++){
       switch(comboBox->currentIndex( )){
       case 0:
         plot->graph( )->addData(i, sim->convHullAreaVec[i]);
@@ -239,14 +254,36 @@ void PlotMainWindow::PlotFunction(QCustomPlot* plot, QComboBox* comboBox, QSpinB
         plot->graph(1)->addData(i, sim->pHull[i].y);
         break;
       case 10:
-        //  plot->graph( )->addData(i, sim->anglesHistory[ui->boidSelectorSpinBox->value( )][i]);
+        plot->graph( )->addData(i, sim->polCumAvg[i] / (double (i-cumBegin)) );
+        break;
+      case 11:
+        plot->graph( )->addData(i, sim->polBulkCumAvg[i] / (double (i-cumBegin)) );
+        break;
+      case 12:
+        plot->graph( )->addData(i, sim->polHullCumAvg[i] / (double (i-cumBegin)) );
+        break;
+      case 13:
+        plot->graph( )->addData(i, abs(sim->curvCumAvg[i] / (double (i-cumBegin)) ) );
+        break;
+      case 14:
+        plot->graph( )->addData(i, abs(sim->curvBulkCumAvg[i] / (double (i-cumBegin)) ));
+        break;
+      case 15:
+        plot->graph( )->addData(i, abs(sim->curvHullCumAvg[i] / (double (i-cumBegin)) ));
+        break;
+      case 16:
+        plot->graph( )->addData(i,sim->numBoidsOnHull[i]);
+        break;
+      case 17:        //  plot->graph( )->addData(i, sim->anglesHistory[ui->boidSelectorSpinBox->value( )][i]);
         plot->graph( )->addData(sim->anglesHistory[ui->boidSelectorSpinBox->value( )][i].x, sim->anglesHistory[ui->boidSelectorSpinBox->value( )][i].y);
         break;
       } // switch
     } // for
     plot->rescaleAxes( );
+    if(comboBox->currentIndex( ) == 16)
+      plot->yAxis->setRangeLower(0.0);
   } // if
-  else if (comboBox->currentIndex( ) == 11){ // angular histogram of boids on the hull
+  else if (comboBox->currentIndex( ) == 18){ // angular histogram of boids on the hull
     plot->addGraph( );
     for (uint i = 0; i < this->sim->numBins; i++)
       plot->graph( )->addData(double(i) / sim->numBins * M_2PI - M_PI, this->sim->angHist[i]);
@@ -254,7 +291,7 @@ void PlotMainWindow::PlotFunction(QCustomPlot* plot, QComboBox* comboBox, QSpinB
     plot->xAxis->setTicker(QSharedPointer<QCPAxisTickerPi>(new QCPAxisTickerPi));
     plot->yAxis->setRangeLower(0);
   } // else if
-  else if(comboBox->currentIndex( ) == 12){ // component histogram of boids on the hull
+  else if(comboBox->currentIndex( ) == 19){ // component histogram of boids on the hull
     plot->addGraph( );
     plot->addGraph( );
     plot->graph(0)->setPen(QPen(Qt::red));
@@ -266,7 +303,7 @@ void PlotMainWindow::PlotFunction(QCustomPlot* plot, QComboBox* comboBox, QSpinB
     plot->rescaleAxes( );
     plot->yAxis->setRangeLower(-1.0);
   } //  else if
-  else if (comboBox->currentIndex( ) == 13) { // histogram of change in angle on the hull
+  else if (comboBox->currentIndex( ) == 20) { // histogram of change in angle on the hull
     plot->addGraph( );
     plot->xAxis->setTicker(QSharedPointer<QCPAxisTickerPi>(new QCPAxisTickerPi));
     for (uint i = 0; i < sim->dAngleHist.size( ); i++) {
@@ -274,7 +311,7 @@ void PlotMainWindow::PlotFunction(QCustomPlot* plot, QComboBox* comboBox, QSpinB
     } // for
     plot->rescaleAxes( );
   } // else if
-  else if (comboBox->currentIndex( ) == 14) { // histogram of distance from geometric center
+  else if (comboBox->currentIndex( ) == 21) { // histogram of distance from geometric center
     plot->addGraph( );
     plot->xAxis->setTicker(QSharedPointer<QCPAxisTickerPi>(new QCPAxisTickerPi));
     for (uint i = 0; i < sim->radiusHist.size( ); i++) {
@@ -286,57 +323,85 @@ void PlotMainWindow::PlotFunction(QCustomPlot* plot, QComboBox* comboBox, QSpinB
 
   plot->replot( );
 
-  if(comboBox->currentIndex( ) < 10){
+  if(comboBox->currentIndex( ) < 17){
     double y1Min = 0.0;
     double y1Max = 0.0;
     double y2Min = 0.0;
     double y2Max = 0.0;
     switch(comboBox->currentIndex( )){
     case 0:
-      y1Min = sim->convHullAreaVec[ui->plotMinSpinBox->value( )];
-      y1Max = sim->convHullAreaVec[ui->plotMaxSpinBox->value( )];
+      y1Min = sim->convHullAreaVec[min];
+      y1Max = sim->convHullAreaVec[max];
       break;
     case 1:
-      y1Min = abs(sim->curvatureVec[ui->plotMinSpinBox->value( )]);
-      y1Max = abs(sim->curvatureVec[ui->plotMaxSpinBox->value( )]);
+      y1Min = abs(sim->curvatureVec[min]);
+      y1Max = abs(sim->curvatureVec[max]);
       break;
     case 2:
-      y1Min = abs(sim->curvatureBulkVec[ui->plotMinSpinBox->value( )]);
-      y1Max = abs(sim->curvatureBulkVec[ui->plotMaxSpinBox->value( )]);
+      y1Min = abs(sim->curvatureBulkVec[min]);
+      y1Max = abs(sim->curvatureBulkVec[max]);
       break;
     case 3:
-      y1Min = abs(sim->curvatureHullVec[ui->plotMinSpinBox->value( )]);
-      y1Max = abs(sim->curvatureHullVec[ui->plotMaxSpinBox->value( )]);
+      y1Min = abs(sim->curvatureHullVec[min]);
+      y1Max = abs(sim->curvatureHullVec[max]);
       break;
     case 4:
-      y1Min = sim->p[ui->plotMinSpinBox->value( )].Length( );
-      y1Max = sim->p[ui->plotMaxSpinBox->value( )].Length( );
+      y1Min = sim->p[min].Length( );
+      y1Max = sim->p[max].Length( );
       break;
     case 5:
-      y1Min = sim->p[ui->plotMinSpinBox->value( )].x;
-      y1Max = sim->p[ui->plotMaxSpinBox->value( )].x;
-      y2Min = sim->p[ui->plotMinSpinBox->value( )].y;
-      y2Max = sim->p[ui->plotMaxSpinBox->value( )].y;
+      y1Min = sim->p[min].x;
+      y1Max = sim->p[max].x;
+      y2Min = sim->p[min].y;
+      y2Max = sim->p[max].y;
       break;
     case 6:
-      y1Min = sim->pBulk[ui->plotMinSpinBox->value( )].Length( );
-      y1Max = sim->pBulk[ui->plotMaxSpinBox->value( )].Length( );
+      y1Min = sim->pBulk[min].Length( );
+      y1Max = sim->pBulk[max].Length( );
       break;
     case 7:
-      y1Min = sim->pBulk[ui->plotMinSpinBox->value( )].x;
-      y1Max = sim->pBulk[ui->plotMaxSpinBox->value( )].x;
-      y2Min = sim->pBulk[ui->plotMinSpinBox->value( )].y;
-      y2Max = sim->pBulk[ui->plotMaxSpinBox->value( )].y;
+      y1Min = sim->pBulk[min].x;
+      y1Max = sim->pBulk[max].x;
+      y2Min = sim->pBulk[min].y;
+      y2Max = sim->pBulk[max].y;
       break;
     case 8:
-      y1Min = sim->pHull[ui->plotMinSpinBox->value( )].Length( );
-      y1Max = sim->pHull[ui->plotMaxSpinBox->value( )].Length( );
+      y1Min = sim->pHull[min].Length( );
+      y1Max = sim->pHull[max].Length( );
       break;
     case 9:
-      y1Min = sim->pHull[ui->plotMinSpinBox->value( )].x;
-      y1Max = sim->pHull[ui->plotMaxSpinBox->value( )].x;
-      y2Min = sim->pHull[ui->plotMinSpinBox->value( )].y;
-      y2Max = sim->pHull[ui->plotMaxSpinBox->value( )].y;
+      y1Min = sim->pHull[min].x;
+      y1Max = sim->pHull[max].x;
+      y2Min = sim->pHull[min].y;
+      y2Max = sim->pHull[max].y;
+      break;
+    case 10:
+      y1Min = sim->polCumAvg[min] / double(min + 1);
+      y1Max = sim->polCumAvg[max] / double(max + 1);
+      break;
+    case 11:
+      y1Min = sim->polBulkCumAvg[min] / double(min + 1);
+      y1Max = sim->polBulkCumAvg[max] / double(max + 1);
+      break;
+    case 12:
+      y1Min = sim->polHullCumAvg[min] / double(min + 1);
+      y1Max = sim->polHullCumAvg[max] / double(max + 1);
+      break;
+    case 13:
+      y1Min = sim->curvCumAvg[min] / double(min + 1);
+      y1Max = sim->curvCumAvg[max] / double(max + 1);
+      break;
+    case 14:
+      y1Min = sim->curvBulkCumAvg[min] / double(min + 1);
+      y1Max = sim->curvBulkCumAvg[max] / double(max + 1);
+      break;
+    case 15:
+      y1Min = sim->curvBulkCumAvg[min] / double(min + 1);
+      y1Max = sim->curvBulkCumAvg[max] / double(max + 1);
+      break;
+    case 16:
+      y1Min = sim->numBoidsOnHull[min];
+      y1Max = sim->numBoidsOnHull[max];
       break;
     } // switch
     ui->statusbar->showMessage("y1 = " + QString::number(y1Min) + " Y1 = " + QString::number(y1Max) + " y2 = " + QString::number(y2Min) + " Y2 = " + QString::number(y2Max));
@@ -344,21 +409,29 @@ void PlotMainWindow::PlotFunction(QCustomPlot* plot, QComboBox* comboBox, QSpinB
 } // plotFunction
 
 void PlotMainWindow::on_plotComboBox_currentIndexChanged(int index){
-  if(index == 10)
+  if(index == 17)
     ui->boidSelectorSpinBox->setVisible(true);
   else
     ui->boidSelectorSpinBox->setVisible(false);
-  if(index > 10){
+  if(index > 17){
     ui->plotMaxPushButton->setVisible(false);
     ui->plotMaxSpinBox->setVisible(false);
     ui->plotMinSpinBox->setVisible(false);
     ui->plotPlotAllPushButton->setVisible(false);
+    ui->fftPushButton->setVisible(false);
   }
   else{
+    ui->fftPushButton->setVisible(true);
     ui->plotMaxPushButton->setVisible(true);
     ui->plotMaxSpinBox->setVisible(true);
     ui->plotMinSpinBox->setVisible(true);
     ui->plotPlotAllPushButton->setVisible(true);
+  }
+  if(index > 9 && index < 16)
+    ui->cumBeginSpinBox->setVisible(true);
+  else{
+    ui->cumBeginSpinBox->setVisible(false);
+    ui->cumBeginSpinBox->setValue(0);
   }
 } // on_plotComboBox_currentIndexChanged
 
@@ -400,3 +473,8 @@ void PlotMainWindow::CloseFourierWindow(int idNr) {
 void PlotMainWindow::on_fftPushButton_clicked( ){
     createFourier( );
 } // on_fftPushButton_clicked
+
+void PlotMainWindow::on_cumBeginSpinBox_valueChanged(int arg1){
+  sim->CalcCumAvg(arg1);
+  ui->plotMaxSpinBox->setMaximum(sim->t-arg1);
+} // on_cumBeginSpinBox_valueChanged

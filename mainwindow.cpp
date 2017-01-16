@@ -34,7 +34,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
   //this->setAttribute(Qt::WA_DeleteOnClose);
 
-  // set to false for windows!
+
   if(OS) defaultPath = "/net/zilcken/data1/InfPlane/";
   else defaultPath = "F:\\Boids\\InfPlane\\";
   this->screencounter = 0;
@@ -128,12 +128,28 @@ void MainWindow::loadPressed( ){
 } // loadPressed
 
 void MainWindow::savePressed( ){
-  QString fileName = QFileDialog::getSaveFileName(this, tr("Save boid config"), defaultPath,tr("BoidInf Files (*.boidInf"));
+  QString fileName = QFileDialog::getSaveFileName(this, tr("Save boid config"), defaultPath,tr("BoidInf Files (*.boidInf)"));
   if(!fileName.isEmpty( ))
     SaveCheckPoint(fileName);
 } // savePressed
 
+void MainWindow::saveDataPressed( ){
+  QString fileName = QFileDialog::getSaveFileName(this, tr("Save boid data"), defaultPath,tr("Boid data Files (*.dat)"));
+  if(!fileName.isEmpty( ))
+    SaveData(fileName);
+} // saveDataPressed
 
+void MainWindow::saveAllPressed( ){
+  QString fileName = QFileDialog::getSaveFileName(this, tr("Save boid files"), defaultPath,tr("Boid Files (*.*)"));
+  if(!fileName.isEmpty( ))
+    SaveAll(fileName);
+} // saveAllPressed
+
+void MainWindow::SaveAll(QString fileName){
+  SaveData(fileName + ".dat");
+  SaveHists(fileName + ".boidHists");
+  SaveCheckPoint(fileName + ".boidInf");
+} // SaveAll
 
 void MainWindow::Init( ){
   this->sim = new BoidSim2D(ui->seedSpinBox->value( ),
@@ -382,7 +398,7 @@ void MainWindow::SaveCheckPoint(QString fileName){
 
   for(uint i = 0; i < sim->angHist.size( ); i++)
       file << sim->angHist[i] << "\t" << sim->componentHist[i].first << "\t" << sim->componentHist[i].second << "\t"
-           << sim->dAngleHist[i].first << "\t" << sim->dAngleHist[i].second << endl ;
+           << sim->dAngleHist[i].first << "\t" << sim->dAngleHist[i].second << "\t" << sim->radiusHist[i] << endl ;
 
   file << endl;
   file.close( );
@@ -436,6 +452,7 @@ void MainWindow::LoadCheckPoint(QString fileName, bool hists){
   double forceConst;
   lineStream1 >> forceConst;
   ui->forceConstantSpinBox->setValue(forceConst);
+  qDebug( ) << "Gamma" << forceConst;
   uint nrBins;
   lineStream1 >> nrBins;
 
@@ -528,7 +545,7 @@ void MainWindow::LoadCheckPoint(QString fileName, bool hists){
       getline(file, angleInfo);
       istringstream lineStream4(angleInfo);
       int dAngleCount;
-      double counts, dAngleSum;
+      double counts, dAngleSum, radiusSum;
       string parallelCountStr, transverseCountStr;
       lineStream4 >> counts;
       lineStream4 >> parallelCountStr;
@@ -536,9 +553,11 @@ void MainWindow::LoadCheckPoint(QString fileName, bool hists){
 
       lineStream4 >> dAngleCount;
       lineStream4 >> dAngleSum;
+      lineStream4 >> radiusSum;
       sim->angHist.push_back(counts);
       sim->componentHist.push_back(pair<double, double> (stod(parallelCountStr), stod(transverseCountStr)));
       sim->dAngleHist.push_back(pair<uint, double> (dAngleCount, dAngleSum));
+      sim->radiusHist.push_back(radiusSum);
     } // for
 
     for(uint i = 0; i < nrBins; i++){
@@ -557,7 +576,8 @@ void MainWindow::LoadCheckPoint(QString fileName, bool hists){
   sim->FindGeometry( );
   sim->FindConvexHull( );
   sim->CalcP( );
-  ShowSim( );
+  sim->CalcCumAvg(1);
+  ShowSim();
   qDebug( ) << "Checkpoint loaded!";
 } // loadCheckPoint
 
@@ -567,7 +587,7 @@ void MainWindow::LoadKeepCurrParams(QString fileName){
   double eta = ui->etaSpinBox->value( );
   double gamma = ui->forceConstantSpinBox->value( );
   vector <pair <uint, double>> informedGroupsTemp = informedGroups;
-  LoadCheckPoint(fileName, true);
+  LoadCheckPoint(fileName, false);
   ui->vNoughtSpinBox->setValue(vNought);
   ui->rhoSpinBox->setValue(rho);
   ui->etaSpinBox->setValue(eta);
@@ -688,7 +708,7 @@ QString MainWindow::FileName( ){
 
   datFileName << "F" << ui->forceConstantSpinBox->value( ); // force
   datFileName << "H" << ui->etaSpinBox->value( ); // noise
-  //datFileName << "v" << ui->vNoughtSpinBox->value( ); // speed
+  datFileName << "v" << ui->vNoughtSpinBox->value( ); // speed
 
   if(ui->nrOfInformedGroupsSpinBox->value( ) > 0){
     datFileName << "NG" << ui->nrOfInformedGroupsSpinBox->value( );
@@ -778,15 +798,32 @@ void MainWindow::on_updateInfBoidsPushButton_clicked( ){
   sim->SetInformedBoids(informedGroups);
 } // on_updateInfBoidsPushButton_clicked
 
-void MainWindow::on_emptyHistsPushButton_clicked( ){
+void MainWindow::ClearHists( ){
   for(uint i = 0; i < sim->numBins; i++){
-    sim->dAngleHist[i].first = 0;
-    sim->dAngleHist[i].second = 0.0;
-    sim->angHist[i] = 0;
-    sim->componentHist[i].first = 0.0;
-    sim->componentHist[i].second = 0.0;
-    sim->radiusHist[i] = 0.0;
-  } // for
+      sim->dAngleHist[i].first = 0;
+      sim->dAngleHist[i].second = 0.0;
+      sim->angHist[i] = 0;
+      sim->componentHist[i].first = 0.0;
+      sim->componentHist[i].second = 0.0;
+      sim->radiusHist[i] = 0.0;
+    } // for
+} // ClearHists
+
+void MainWindow::ClearVecs( ){
+  sim->t = 0;
+  sim->p.clear( );
+  sim->pBulk.clear( );
+  sim->pHull.clear( );
+  sim->convHullAreaVec.clear( );
+  sim->curvatureVec.clear( );
+  sim->curvatureBulkVec.clear( );
+  sim->curvatureHullVec.clear( );
+  sim->numBoidsOnHull.clear( );
+  sim->avgPosGeomHistory.clear( );
+} // ClearVectors
+
+void MainWindow::on_emptyHistsPushButton_clicked( ){
+  ClearHists( );
 } // on_emptyHistsPushButton_clicked
 
 void MainWindow::on_vNoughtSpinBox_valueChanged(double arg1){
@@ -801,6 +838,7 @@ void MainWindow::createPlot( ){
 
   PlotMainWindow * plotMainWindow;
   plotMainWindow = new PlotMainWindow(this, defaultPath, sim, idNr);
+
   plotMainWindow->show( );
 
   QMainWindow::connect(plotMainWindow, SIGNAL(PlotGetsClosed(int)), SLOT(ClosePlotWindow(int)));
@@ -858,6 +896,8 @@ void MainWindow::on_boidTrailSelectorSpinBox_valueChanged(int arg1){
 
 void MainWindow::on_numBoidsToTrackSpinBox_valueChanged(int arg1){
   ui->boidTrailSelectorSpinBox->setMaximum(arg1-1);
+  sim->nrOfBoidsToTrack = arg1;
+  sim->InitTrackedBoids( );
 } // on_numBoidsToTrackSpinBox_valueChanged
 
 void MainWindow::on_alignRotCheckBox_toggled(bool checked){
@@ -988,95 +1028,106 @@ void MainWindow::on_drawDirectionHullCheckBox_toggled(bool checked){
   sim->drawHullDirections = checked;
   ReDrawOnInterfaceChange( );
 } // on_drawDirectionHullCheckBox_toggled
+
+
+void MainWindow::PrintHist(QString fileName){
+  vector<QString> fileNames;
+  fileNames.clear( );
+  ifstream input(fileName.toStdString( ));
+  string line;
+  while(getline(input, line)) // read in file paths
+    fileNames.push_back(QString::fromStdString(line));
+  input.close( );
+
+  uint timeStepsToRun = 100000;
+  uint stepsPerUpdate = 100;
+
+  for(uint i = 0; i < fileNames.size( ); i++){
+    Init( );
+    LoadCheckPoint(fileNames[i] + ".boidInf",false);
+    on_emptyHistsPushButton_clicked( );
+    on_emptyVecsPushButton_clicked( );
+
+  //  on_emptyHistsPushButton_clicked( );
+    for(uint j = 0; j < timeStepsToRun; j++){
+      sim->NextStep( );
+      if(j % stepsPerUpdate == 0){
+        PrintStatusBar( );
+        ShowSim( );
+        qDebug( ) << i+1 << "\\" << fileNames.size( ) << fileNames[i] << j;
+      } // if
+    } // for j
+    SaveAll(fileNames[i]);
+  } // for i
+
+} // PrintHist
+
+void MainWindow::saveHistsPressed( ){
+  QString fileName = QFileDialog::getSaveFileName(this, tr("Save boid config"), defaultPath,tr("BoidInf Files (*.boidHists)"));
+  if(!fileName.isEmpty( ))
+    SaveHists(fileName);
+} // saveHistsPressed
+
+void MainWindow::on_runHistScriptPushButton_clicked( ){
+  QString fileName = QFileDialog::getOpenFileName(this, tr("Load list of boidInf files"), defaultPath,tr("Text Files (*.*)"));
+  if(!fileName.isEmpty( ))
+    PrintHist(fileName);
+} // on_runHistScriptPushButton_clicked
+
+
+void MainWindow::on_emptyVecsPushButton_clicked( ){
+  ClearVecs( );
+} // on_emptyVecsPushButton_clicked
+
 void MainWindow::scriptPressed( ){
   int timestepstorun = 100000;
-  int numIncA = 1;
-  int numIncB = 41;
+  int numIncA = 10;
+  int numIncB = 21;
   int stepsPerUpdate = 100;
 
-  ui->etaSpinBox->setValue(0.1);
+  ui->etaSpinBox->setValue(1);
   ui->initPosComboBox->setCurrentIndex(1);
   ui->nrOfBoidsSpinBox->setValue(2000);
-QString oldFileName = "/net/zilcken/data1/InfPlane/VarForceEta0.10/Stationary/BoidPlots_PDiDRaF9.0000H0.1000.boidInf";
-  for(int i = 0; i < numIncA; i++){
-    //ui->etaSpinBox->setValue(0.1 + i * 0.05);
+  QString oldFileName = "/net/zilcken/data1/InfPlane/BoidPlots_PDiDRaF5.0000H1.0000v0.0030";
+  for(int i = 1; i < numIncA; i++){
+    //ui->etaSpinBox->setValue(0.15 + i * 0.05);
     //ui->informedAngleDoubleSpinBox->setValue((double) i / 100.0);
-    //ui->forceConstantSpinBox->setValue(1.0 + double(i) * 4.0);
-    for(int j = 1; j < numIncB; j++){
-      ui->forceConstantSpinBox->setValue(9.0 + double (j) * 0.05);
+    ui->forceConstantSpinBox->setValue(5 + double(i));
+    for(int j = 0; j < numIncB; j++){
+      //ui->forceConstantSpinBox->setValue(50);
       //ui->forceConstantSpinBox->setValue(10.0 * pow(10, 2.0 * double(j)/21));
-      //ui->etaSpinBox->setValue( + double(j) * 0.025);
+      //ui->etaSpinBox->setValue(double(j) * 0.025);
+      ui->vNoughtSpinBox->setValue(3.0 * pow(10,double(j)/10.0 - 3) );
+      ui->forceConstantSpinBox->setValue(5 + double(i));
       qDebug( ) << "Start init...";
       Init( );
       qDebug( ) << "Done with init";
-
-      qDebug( ) << "Loading checkpoint...";
-      LoadKeepCurrParams(oldFileName);
-
-      sim->p.clear( );
-      sim->convHullAreaVec.clear( );
-      sim->t = 0;
-      ShowSim( );
+      if(j > 0){
+        qDebug( ) << "Loading checkpoint...";
+        LoadCheckPoint(oldFileName + ".boidInf",true);
+        ui->forceConstantSpinBox->setValue(5 + double(i));
+        ui->vNoughtSpinBox->setValue(3.0 * pow(10,double(j)/10.0 - 3) );
+        //ui->forceConstantSpinBox->setValue(16.5 + double(j) * 0.5);
+        //ui->etaSpinBox->setValue(double(j) * 0.025);
+        ClearVecs( );
+        ClearHists( );
+        sim->t = 0;
+        ShowSim( );
+      }
       for(int k = 0; k < timestepstorun;k++){
         sim->NextStep( );
 
         if(k%stepsPerUpdate == 0){
-          if (sim->convHullArea >= 10000.0) {
-            k = 0;
-            Init( );
-            qDebug( ) << "Diverging! Restarting";
-          }
           PrintStatusBar( );
           ShowSim( );
           qDebug( ) << i << j << sim->t << sim->eta << sim->rho << sim->forceConstant << sim->convHullArea;
         } // if
       } // for k
       qDebug( ) << "Done with time loop, i" << i << "j" << j;
-      QString datFileName = FileName( );
-     // oldFileName = datFileName + ".boidInf";
-      SaveData(datFileName + ".dat");
-      SaveCheckPoint(datFileName + ".boidInf");
-      SaveHists(datFileName + ".boidHists");
+      oldFileName = FileName( );
+      qDebug( ) << oldFileName;
+      SaveAll(FileName( ));
     } // for j
     qDebug( ) << "Done with inner loop, i" << i;
   } // for i
 } // scriptPressed
-
-void MainWindow::PrintHist( ){
-  vector<QString> fileNames;
-  fileNames.clear( );
-  ifstream input("/data1/InfPlane/filenames.txt");
-  string line;
-  while(getline(input, line)) // read in file paths
-    fileNames.push_back(QString::fromStdString(line));
-  input.close( );
-  uint timeStepsToRun = 50000;
-  uint stepsPerUpdate = 100;
-  for(uint i = 0; i < fileNames.size( ); i++){
-    Init( );
-    LoadCheckPoint(fileNames[i] + ".boidInf",false);
-    on_emptyHistsPushButton_clicked( );
-    for(uint j = 0; j < timeStepsToRun; j++){
-      sim->NextStep( );
-      if(j % stepsPerUpdate == 0){
-        PrintStatusBar( );
-        ShowSim( );
-        qDebug( ) << i << "\\" << fileNames.size( ) << fileNames[i] << j;
-      } // if
-    } // for j
-    SaveHists(fileNames[i] + ".boidHists");
-    SaveData(fileNames[i] + ".dat");
-    SaveCheckPoint(fileNames[i] + ".boidInf");
-  } // for i
-
-} // PrintHist
-
-void MainWindow::on_saveHistsPushButton_clicked( ){
-  QString fileName = QFileDialog::getSaveFileName(this, tr("Save boid config"), defaultPath,tr("BoidInf Files (*.boidHists"));
-  if(!fileName.isEmpty( ))
-    SaveHists(fileName);
-} // on_saveHistsPushButton_clicked
-
-void MainWindow::on_runHistScriptPushButton_clicked( ){
-    PrintHist( );
-} // on_runHistScriptPushButton_clicked

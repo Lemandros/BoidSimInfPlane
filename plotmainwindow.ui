@@ -18,7 +18,7 @@
     <item row="0" column="0">
      <layout class="QHBoxLayout" name="plotHorizontalLayout">
       <item>
-       <layout class="QVBoxLayout" name="plotVerticalLayout" stretch="0,0,0,0,0,0,0,0,0,0,0,0,0">
+       <layout class="QVBoxLayout" name="plotVerticalLayout" stretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0">
         <item>
          <widget class="QComboBox" name="plotComboBox">
           <property name="maximumSize">
@@ -82,7 +82,42 @@
           </item>
           <item>
            <property name="text">
-            <string>Boid Angle</string>
+            <string>CumPol</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>CumPolBulk</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>CumPolHull</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>CumCurv</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>CumCurvBulk</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>CumCurvHull</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>BoidsOnHull</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Boid History</string>
            </property>
           </item>
           <item>
@@ -111,6 +146,13 @@
          <widget class="QSpinBox" name="boidSelectorSpinBox">
           <property name="prefix">
            <string>Boid:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSpinBox" name="cumBeginSpinBox">
+          <property name="prefix">
+           <string>Begin:</string>
           </property>
          </widget>
         </item>

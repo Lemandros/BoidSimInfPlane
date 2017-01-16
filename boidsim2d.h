@@ -12,6 +12,7 @@
 #include <cstring>
 #include <istream>
 #include <iostream>
+#include <random>
 using namespace std;
 
 class BoidSim2D
@@ -173,7 +174,6 @@ public:
   int yDrawOffset;
   double zoomScale;
   Vector2D COM;
-  Vector2D birdTrack;
   bool drawSizeConst;
   uint nrOfBoids;
   uint nrOfTimeStepsToRun;
@@ -191,6 +191,13 @@ public:
   uint perpBoidNrA, perpBoidNrB;                      // boids on hull closest to vector perpendicular to polarization vector direction
   double closestParAnglePlus, closestParAngleMin, closestPerpAngle; // angle closest to cross directions
   vector<pair <uint, double> > groups;
+  vector<double> polCumAvg;
+  vector<double> polBulkCumAvg;
+  vector<double> polHullCumAvg;
+  vector<double> curvCumAvg;
+  vector<double> curvBulkCumAvg;
+  vector<double> curvHullCumAvg;
+  vector<double> areaCumAvg;
   double rho; // density
   double eta; // random error range
   double vNought; // velocity of boids
@@ -203,7 +210,6 @@ public:
   vector<double> convHullAreaVec; // vector of surface areas
   vector<uint> numBoidsOnHull; // vector of amount of boids on the hull
   vector<uint> indices; // vector of indices to boids for setting informed boids
-  //vector<vector <double> > anglesHistory; // history of angles relative to center of hull, centered on polarisation;
   vector<vector <Vector2D> > anglesHistory;
   vector <vector <uvec> > boxes; // boxes containing boid indices
   vector<uint> convexHull; // list of boid indices on the hull
@@ -213,6 +219,7 @@ public:
   vector<Vector2D> pHull; // hull polarisation history
   vector<Vector2D> pBulk; // bull polarisation history
   Vector2D P; // current total polarisation
+  Vector2D Pold;
   Vector2D Phull; // current hull polarisation
   Vector2D Pbulk; // current bulk polarisation
   Vector2D avgPos, avgPosGeom, avgPosGeomOld;
@@ -244,7 +251,8 @@ public:
 
   void FindGeometry( );
   void CalcP( );
-
+  void CalcCumAvg(uint begin);
+  void InitTrackedBoids( );
   void InitBoids(int posIndex, int dirIndex);
   void SetInformedBoids(vector<pair <uint, double> > groups);
   void FillBoxes( );
@@ -264,3 +272,4 @@ public:
 };
 
 #endif // BOIDSIM2D_H
+

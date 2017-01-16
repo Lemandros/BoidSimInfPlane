@@ -177,7 +177,7 @@
                <double>0.010000000000000</double>
               </property>
               <property name="maximum">
-               <double>50.000000000000000</double>
+               <double>10000.000000000000000</double>
               </property>
               <property name="singleStep">
                <double>0.010000000000000</double>
@@ -226,6 +226,9 @@
              <widget class="QSpinBox" name="numBoidsToTrackSpinBox">
               <property name="prefix">
                <string>Tracked boids: </string>
+              </property>
+              <property name="maximum">
+               <number>2000</number>
               </property>
              </widget>
             </item>
@@ -482,9 +485,9 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="saveHistsPushButton">
+          <widget class="QPushButton" name="emptyVecsPushButton">
            <property name="text">
-            <string>Save Hists</string>
+            <string>Empty Vecs</string>
            </property>
           </widget>
          </item>
@@ -798,8 +801,11 @@
    <addaction name="separator"/>
    <addaction name="actionNoise"/>
    <addaction name="separator"/>
+   <addaction name="actionSaveHists"/>
+   <addaction name="actionSaveData"/>
    <addaction name="actionSave"/>
    <addaction name="actionLoad"/>
+   <addaction name="actionSaveAll"/>
    <addaction name="separator"/>
    <addaction name="actionAddPlot"/>
    <addaction name="actionFFT"/>
@@ -931,6 +937,42 @@
    </property>
    <property name="shortcut">
     <string>Alt+F</string>
+   </property>
+  </action>
+  <action name="actionSaveData">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/data.png</normaloff>:/images/data.png</iconset>
+   </property>
+   <property name="text">
+    <string>SaveData</string>
+   </property>
+   <property name="toolTip">
+    <string>Save Data</string>
+   </property>
+  </action>
+  <action name="actionSaveAll">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/saveall.png</normaloff>:/images/saveall.png</iconset>
+   </property>
+   <property name="text">
+    <string>saveAll</string>
+   </property>
+   <property name="toolTip">
+    <string>Save All Files</string>
+   </property>
+  </action>
+  <action name="actionSaveHists">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/savehists.png</normaloff>:/images/savehists.png</iconset>
+   </property>
+   <property name="text">
+    <string>saveHists</string>
+   </property>
+   <property name="toolTip">
+    <string>Save histograms</string>
    </property>
   </action>
  </widget>
@@ -1067,6 +1109,54 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>actionSaveData</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>saveDataPressed()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>745</x>
+     <y>499</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionSaveAll</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>saveAllPressed()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>745</x>
+     <y>499</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionSaveHists</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>saveHistsPressed()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>745</x>
+     <y>499</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>initPressed()</slot>
@@ -1077,5 +1167,8 @@
   <slot>loadPressed()</slot>
   <slot>createPlot()</slot>
   <slot>createFourier()</slot>
+  <slot>saveDataPressed()</slot>
+  <slot>saveAllPressed()</slot>
+  <slot>saveHistsPressed()</slot>
  </slots>
 </ui>

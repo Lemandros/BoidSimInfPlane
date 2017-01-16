@@ -56,6 +56,7 @@ private slots:
   void on_plotComboBox_currentIndexChanged(int index);
   void on_boidSelectorSpinBox_valueChanged(int arg1);
   void on_fftPushButton_clicked();
+  void on_cumBeginSpinBox_valueChanged(int arg1);
 };
 
 #endif // PLOTMAINWINDOW_H

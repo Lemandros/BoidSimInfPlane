@@ -47,6 +47,8 @@ public slots:
   void noisePressed(bool checked);
   void loadPressed( );
   void savePressed( );
+  void saveDataPressed( );
+  void saveAllPressed( );
   void scriptPressed( );
   void createPlot( );
   void createFourier( );
@@ -150,12 +152,15 @@ private slots:
   void on_initPosComboBox_currentIndexChanged(int index);
 
   void on_initDirectionComboBox_currentIndexChanged(int index);
-
+  void ClearHists( );
+  void ClearVecs( );
   void SaveHists(QString fileName);
-
-  void on_saveHistsPushButton_clicked( );
-  void PrintHist( );
+  void SaveAll(QString fileName);
+  void saveHistsPressed( );
+  void PrintHist(QString fileName);
   void on_runHistScriptPushButton_clicked( );
+  void on_emptyVecsPushButton_clicked();
+
 private:
   Ui::MainWindow *ui;
 };

@@ -174,13 +174,13 @@
                <number>5</number>
               </property>
               <property name="minimum">
-               <double>0.010000000000000</double>
+               <double>0.000010000000000</double>
               </property>
               <property name="maximum">
                <double>10000.000000000000000</double>
               </property>
               <property name="singleStep">
-               <double>0.010000000000000</double>
+               <double>0.000001000000000</double>
               </property>
               <property name="value">
                <double>5.000000000000000</double>
@@ -241,22 +241,22 @@
                 </property>
                 <item>
                  <property name="text">
-                  <string>Pos: Random</string>
+                  <string>Random</string>
                  </property>
                 </item>
                 <item>
                  <property name="text">
-                  <string>Pos: Disk</string>
+                  <string>Disk</string>
                  </property>
                 </item>
                 <item>
                  <property name="text">
-                  <string>Pos: SquarePerimeter</string>
+                  <string>SquarePerimeter</string>
                  </property>
                 </item>
                 <item>
                  <property name="text">
-                  <string>Pos: Circle</string>
+                  <string>Circle</string>
                  </property>
                 </item>
                </widget>
@@ -265,22 +265,72 @@
                <widget class="QComboBox" name="initDirectionComboBox">
                 <item>
                  <property name="text">
-                  <string>Dir: Random</string>
+                  <string>Random</string>
                  </property>
                 </item>
                 <item>
                  <property name="text">
-                  <string>Dir: Rotating</string>
+                  <string>Rotating</string>
                  </property>
                 </item>
                 <item>
                  <property name="text">
-                  <string>Dir: Inward</string>
+                  <string>Inward</string>
                  </property>
                 </item>
                 <item>
                  <property name="text">
-                  <string>Dir: Outward</string>
+                  <string>Outward</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="noiseForceHorizontalLayout">
+              <item>
+               <widget class="QComboBox" name="noiseTypeComboBox">
+                <item>
+                 <property name="text">
+                  <string>Vectorial</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Scalar</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="forceTypeComboBox">
+                <property name="currentIndex">
+                 <number>0</number>
+                </property>
+                <item>
+                 <property name="text">
+                  <string>Nearest</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Furthest</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Center</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Mean</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Curvature</string>
                  </property>
                 </item>
                </widget>
@@ -799,8 +849,6 @@
    <addaction name="actionInit"/>
    <addaction name="actionScript"/>
    <addaction name="separator"/>
-   <addaction name="actionNoise"/>
-   <addaction name="separator"/>
    <addaction name="actionSaveHists"/>
    <addaction name="actionSaveData"/>
    <addaction name="actionSave"/>
@@ -858,25 +906,6 @@
    </property>
    <property name="shortcut">
     <string>S</string>
-   </property>
-  </action>
-  <action name="actionNoise">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="resources.qrc">
-     <normaloff>:/images/vectorial.png</normaloff>
-     <normalon>:/images/scalar.png</normalon>:/images/vectorial.png</iconset>
-   </property>
-   <property name="text">
-    <string>Noise</string>
-   </property>
-   <property name="toolTip">
-    <string>Change noise type</string>
-   </property>
-   <property name="shortcut">
-    <string>N</string>
    </property>
   </action>
   <action name="actionSave">
@@ -1046,22 +1075,6 @@
    </hints>
   </connection>
   <connection>
-   <sender>actionNoise</sender>
-   <signal>triggered(bool)</signal>
-   <receiver>MainWindow</receiver>
-   <slot>noisePressed(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>763</x>
-     <y>442</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>actionScript</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
@@ -1162,7 +1175,6 @@
   <slot>initPressed()</slot>
   <slot>runPausePressed(bool)</slot>
   <slot>scriptPressed()</slot>
-  <slot>noisePressed(bool)</slot>
   <slot>savePressed()</slot>
   <slot>loadPressed()</slot>
   <slot>createPlot()</slot>

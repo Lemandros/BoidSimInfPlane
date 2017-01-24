@@ -24,6 +24,7 @@ FFT::FFT(QWidget *parent, QString defaultPath, BoidSim2D* sim, int idNr) :
   titles.push_back("Y-Coordinate");
   titles.push_back("T-Coordinate");
   titles.push_back("R-Coordinate");
+  titles.push_back("Area");
   ui->plotMaxSpinBox->setMaximum(sim->t);
   ui->plotMinSpinBox->setMaximum(sim->t-1);
   ui->plotMaxSpinBox->setValue(sim->t);
@@ -55,6 +56,12 @@ FFT::FFT(QString defaultPath, QWidget *parent, BoidSim2D* sim, int idNr, int plo
   ui->thetaCheckBox->setChecked(true);
   if(type == 3)
     ui->radiusCheckBox->setChecked(true);
+  if(type == 4){
+    ui->radiusCheckBox->setVisible(false);
+    ui->thetaCheckBox->setVisible(false);
+    ui->xCoordCheckBox->setVisible(false);
+    ui->yCoordCheckBox->setVisible(false);
+  } // if
   ui->plotMinSpinBox->setValue(tMin);
   ui->plotMaxSpinBox->setMaximum(tMax);
   ui->plotMaxSpinBox->setValue(tMax);
@@ -70,9 +77,13 @@ FFT::FFT(QString defaultPath, QWidget *parent, BoidSim2D* sim, int idNr, int plo
   titles.push_back("Y-Coordinate");
   titles.push_back("T-Coordinate");
   titles.push_back("R-Coordinate");
+  titles.push_back("Area");
+
   ui->fftComboBox->setCurrentIndex(type);
+
   if(type == 3)
     ui->boidSelectorSpinBox->setValue(boidNr);
+
   plotColours.clear( );
   plotColours.push_back(QPen(QColor(255,0,0)));
   plotColours.push_back(QPen(QColor(0,255,0)));
@@ -109,7 +120,7 @@ void FFT::closeEvent(QCloseEvent *event) {
 
 void FFT::SetUp( ){
 
-  ui->plotWidget->clearGraphs( );
+//  ui->plotWidget->clearGraphs( );
 
   start = ui->plotMinSpinBox->value( );
   end = ui->plotMaxSpinBox->value( );
@@ -131,32 +142,40 @@ void FFT::SetUp( ){
     fouriers.push_back(2);
   if(ui->radiusCheckBox->isChecked( ))
     fouriers.push_back(3);
+  if(ui->fftComboBox->currentIndex( ) == 4){
+    fouriers.clear( );
+    fouriers.push_back(4);
+  }
+
   outputData.clear( );
-  outputData = vector <vector <double> > (4);
+  outputData = vector <vector <double> > (5);
   plan = fftw_plan_dft_r2c_1d(N, in, out, FFTW_MEASURE);
 } // SetUp
 
 void FFT::PerformFFT(int index){
   for(uint i = 0; i < N; i++)
     in[i] = inputData[index][i];
+
   fftw_execute(plan);
-  for(uint i = 0; i < N; i++){
+
+  for(uint i = 0; i < N; i++)
     outputData[index].push_back(sqrt(out[i][0] * out[i][0] + out[i][1] * out[i][1]));
-  } // for
 } // PerformFFT
 
 void FFT::PlotFFT( ){
   ui->plotWidget->clearGraphs( );
+
   uint min = ui->fftPlotMinSpinBox->value( );
   uint max = ui->fftPlotMaxSpinBox->value( );
+
   for(uint i = 0; i < fouriers.size( ); i++){
     ui->plotWidget->addGraph( );
     ui->plotWidget->graph(i)->setPen(plotColours[fouriers[i]]);
     ui->plotWidget->graph(i)->setName(titles[fouriers[i]]);
-
     for(uint j = min; j < max; j++)
       ui->plotWidget->graph(i)->addData(double(j), outputData[fouriers[i]][j]);
   } // for i
+
   ui->plotWidget->rescaleAxes( );
   ui->plotWidget->legend->setVisible(true);
   ui->plotWidget->replot( );
@@ -164,8 +183,9 @@ void FFT::PlotFFT( ){
 
 void FFT::LoadData(int index){
   inputData.clear( );
-  inputData = vector <vector <double> > (4);
+  inputData = vector <vector <double> > (5);
   BoidSim2D::Vector2D P;
+  double area = 0;
   int boid = ui->boidSelectorSpinBox->value( );
   for(uint i = 0; i < N; i++){
     uint t = start + i;
@@ -187,6 +207,9 @@ void FFT::LoadData(int index){
     inputData[1].push_back(P.y);
     inputData[2].push_back(P.Theta( ));
     inputData[3].push_back(P.Length( ));
+
+    if(index == 4)
+      inputData[4].push_back(sim->convHullAreaVec[t]);
   } // for
 } // LoadData
 
@@ -196,16 +219,19 @@ void FFT::on_setupPushButton_clicked( ){
 } // on_setupPushButton_clicked
 
 void FFT::on_fftPushButton_clicked( ){
+  qDebug( ) <<"a";
   if(ui->plotMaxSpinBox->value( ) != oldEnd || ui->plotMinSpinBox->value( ) != oldStart){
     oldEnd = ui->plotMaxSpinBox->value( );
     oldStart = ui->plotMinSpinBox->value( );
     SetUp( );
     LoadData(ui->fftComboBox->currentIndex( ));
   }
-
+qDebug( ) <<"b";
   for(uint i = 0; i < fouriers.size( ); i++)
     PerformFFT(fouriers[i]);
+qDebug( ) <<"c";
   PlotFFT( );
+  qDebug( ) <<"d";
 } // on_fftPushButton_clicked
 
 void FFT::on_printPushButton_clicked( ){
@@ -284,14 +310,26 @@ void FFT::PlotSetLog(bool axis, bool checked, QCustomPlot* plot){
 } // PlotSetLog
 
 void FFT::on_fftComboBox_currentIndexChanged(int index){
+  if(index == 4){
+    ui->boidSelectorSpinBox->setVisible(false);
+    ui->radiusCheckBox->setVisible(false);
+    ui->thetaCheckBox->setVisible(false);
+    ui->xCoordCheckBox->setVisible(false);
+    ui->yCoordCheckBox->setVisible(false);
+  }
+  else{
+    ui->thetaCheckBox->setVisible(true);
+    ui->xCoordCheckBox->setVisible(true);
+    ui->yCoordCheckBox->setVisible(true);
+  }
   if(index == 3){
     ui->boidSelectorSpinBox->setVisible(true);
+    ui->radiusCheckBox->setText("Distance to GC");
     ui->radiusCheckBox->setVisible(true);
   }else{
     ui->boidSelectorSpinBox->setVisible(false);
-    ui->radiusCheckBox->setVisible(false);
+    ui->radiusCheckBox->setText("Magnitude of P");
   }
-
 } // on_fftComboBox_currentIndexChanged
 
 void FFT::on_plotMaxSpinBox_valueChanged(int arg1){

@@ -18,7 +18,7 @@
     <item row="0" column="0">
      <layout class="QHBoxLayout" name="plotHorizontalLayout">
       <item>
-       <layout class="QVBoxLayout" name="plotVerticalLayout" stretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0">
+       <layout class="QVBoxLayout" name="plotVerticalLayout" stretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0">
         <item>
          <widget class="QComboBox" name="plotComboBox">
           <property name="maximumSize">
@@ -241,6 +241,19 @@
          <widget class="QPushButton" name="fftPushButton">
           <property name="text">
            <string>FFT</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QTextEdit" name="sumTextEdit">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>48</height>
+           </size>
+          </property>
+          <property name="readOnly">
+           <bool>true</bool>
           </property>
          </widget>
         </item>

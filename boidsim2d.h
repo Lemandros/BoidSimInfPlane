@@ -57,6 +57,13 @@ public:
       return ans;
     } // operator+
 
+    Vector2D operator/(double a) {
+      Vector2D ans(this);
+      ans.x /= a;
+      ans.y /= a;
+      return ans;
+    } // operator/
+
     Vector2D operator*(double a) {
       Vector2D ans(this);
       ans.x *= a;
@@ -95,6 +102,11 @@ public:
       return *this;
     } // operator/=
 
+    Vector2D& operator*=(double a) {
+      this->x *= a;
+      this->y *= a;
+      return *this;
+    } // operator*=
 
     void RandBox(BoidSim2D* parent, mt19937* rng);
     void RandDisk(BoidSim2D* parent, mt19937* rng);
@@ -155,7 +167,7 @@ public:
 
 
   // PARAMS:
-  bool noiseType;
+  bool noiseType; // false = vectorial, true = scalar
   bool drawBoids;
   bool drawHull;
   bool drawHullBoids;
@@ -182,6 +194,7 @@ public:
   uint nrOfBoidsOnConvHull;
   uint t;
   uint nrOfTrailPoints;
+  uint forceType;
   int minX, maxX, minY, maxY;
   double minXd, maxXd, minYd, maxYd;
   uint nBox, nBoxX, nBoxY;
@@ -266,6 +279,7 @@ public:
   void FindHullAngle(Boid &b, Vector2D pNorm, double polAngle, uint boidIndex);
   void UpdateDAngleHist(Boid &b, uint i);
   void CalcHullNormal(Boid &b, uint i);
+  Vector2D NormalNearestNeighbour(Vector2D t1, Vector2D t2, double t2Length);
 
   BoidSim2D(int seed, double rho, uint nrOfBoids, int posIndex);
   double CrossProduct(Vector2D &O, Vector2D &a, Vector2D &b);

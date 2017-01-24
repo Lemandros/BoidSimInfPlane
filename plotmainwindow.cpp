@@ -14,7 +14,7 @@ PlotMainWindow::PlotMainWindow(QWidget *parent, QString defaultPath, BoidSim2D *
   ui(new Ui::PlotMainWindow) {
   ui->setupUi(this);
   this->setAttribute(Qt::WA_DeleteOnClose);
-
+  this->ui->sumTextEdit->setVisible(false);
   this->idNr = idNr;
   this->sim = sim;
   this->defaultPath = defaultPath;
@@ -203,6 +203,8 @@ void PlotMainWindow::PlotFunction(QCustomPlot* plot, QComboBox* comboBox, QSpinB
   int min = minSpin->value( );
   int max = maxSpin->value( );
   int cumBegin = ui->cumBeginSpinBox->value( ) - 1;
+  double sum = 0;
+  double sum2 = 0;
   plot->clearGraphs( );
 
   if(comboBox->currentIndex( ) < 18){
@@ -285,13 +287,18 @@ void PlotMainWindow::PlotFunction(QCustomPlot* plot, QComboBox* comboBox, QSpinB
   } // if
   else if (comboBox->currentIndex( ) == 18){ // angular histogram of boids on the hull
     plot->addGraph( );
-    for (uint i = 0; i < this->sim->numBins; i++)
-      plot->graph( )->addData(double(i) / sim->numBins * M_2PI - M_PI, this->sim->angHist[i]);
+    for (uint i = 0; i < this->sim->numBins; i++){
+      double dat = this->sim->angHist[i];
+      plot->graph( )->addData(double(i) / sim->numBins * M_2PI - M_PI, dat);
+      sum += dat;
+    }
     plot->rescaleAxes( );
     plot->xAxis->setTicker(QSharedPointer<QCPAxisTickerPi>(new QCPAxisTickerPi));
     plot->yAxis->setRangeLower(0);
+    ui->sumTextEdit->setText("Sum: " + QString::number(sum) + "\nAvg: " + QString::number(sum/double(sim->t)));
   } // else if
   else if(comboBox->currentIndex( ) == 19){ // component histogram of boids on the hull
+    ui->sumTextEdit->setVisible(false);
     plot->addGraph( );
     plot->addGraph( );
     plot->graph(0)->setPen(QPen(Qt::red));
@@ -306,19 +313,27 @@ void PlotMainWindow::PlotFunction(QCustomPlot* plot, QComboBox* comboBox, QSpinB
   else if (comboBox->currentIndex( ) == 20) { // histogram of change in angle on the hull
     plot->addGraph( );
     plot->xAxis->setTicker(QSharedPointer<QCPAxisTickerPi>(new QCPAxisTickerPi));
-    for (uint i = 0; i < sim->dAngleHist.size( ); i++) {
-      plot->graph( )->addData(double(i)/sim->dAngleHist.size( ) * M_2PI - M_PI, sim->dAngleHist[i].second / double(sim->dAngleHist[i].first));
+    for (uint i = 0; i < this->sim->numBins; i++) {
+      double dat = sim->dAngleHist[i].second / double(sim->dAngleHist[i].first);
+      plot->graph( )->addData(double(i)/sim->dAngleHist.size( ) * M_2PI - M_PI, dat);
+      sum += dat;
+      sum2 += dat * dat;
     } // for
     plot->rescaleAxes( );
+    ui->sumTextEdit->setText("Sum: " + QString::number(sum) + "\nSum2: " + QString::number(sum2) + "\nStdDev: " + QString::number(sqrt(sum2 - sum*sum/(sim->numBins*sim->numBins))));
   } // else if
   else if (comboBox->currentIndex( ) == 21) { // histogram of distance from geometric center
     plot->addGraph( );
     plot->xAxis->setTicker(QSharedPointer<QCPAxisTickerPi>(new QCPAxisTickerPi));
     for (uint i = 0; i < sim->radiusHist.size( ); i++) {
-      plot->graph( )->addData(double(i)/sim->radiusHist.size( ) * M_2PI - M_PI, sim->radiusHist[i] / double(sim->angHist[i]));
+      double dat = sim->radiusHist[i] / double(sim->angHist[i]);
+      plot->graph( )->addData(double(i)/sim->radiusHist.size( ) * M_2PI - M_PI, dat);
+      sum += dat;
+      sum2 += dat * dat;
     } // for
     plot->yAxis->setRangeLower(-1.0);
     plot->rescaleAxes( );
+    ui->sumTextEdit->setText("Sum: " + QString::number(sum) + "\nSum2: " + QString::number(sum2) + "\nStdDev: " + QString::number(sqrt(sum2 - sum*sum/(sim->numBins*sim->numBins))));
   } // else if
 
   plot->replot( );
@@ -406,6 +421,7 @@ void PlotMainWindow::PlotFunction(QCustomPlot* plot, QComboBox* comboBox, QSpinB
     } // switch
     ui->statusbar->showMessage("y1 = " + QString::number(y1Min) + " Y1 = " + QString::number(y1Max) + " y2 = " + QString::number(y2Min) + " Y2 = " + QString::number(y2Max));
   }
+  ui->sumTextEdit->setFontPointSize(6);
 } // plotFunction
 
 void PlotMainWindow::on_plotComboBox_currentIndexChanged(int index){
@@ -419,6 +435,7 @@ void PlotMainWindow::on_plotComboBox_currentIndexChanged(int index){
     ui->plotMinSpinBox->setVisible(false);
     ui->plotPlotAllPushButton->setVisible(false);
     ui->fftPushButton->setVisible(false);
+    ui->sumTextEdit->setVisible(true);
   }
   else{
     ui->fftPushButton->setVisible(true);
@@ -426,6 +443,7 @@ void PlotMainWindow::on_plotComboBox_currentIndexChanged(int index){
     ui->plotMaxSpinBox->setVisible(true);
     ui->plotMinSpinBox->setVisible(true);
     ui->plotPlotAllPushButton->setVisible(true);
+    ui->sumTextEdit->setVisible(false);
   }
   if(index > 9 && index < 16)
     ui->cumBeginSpinBox->setVisible(true);
@@ -433,6 +451,8 @@ void PlotMainWindow::on_plotComboBox_currentIndexChanged(int index){
     ui->cumBeginSpinBox->setVisible(false);
     ui->cumBeginSpinBox->setValue(0);
   }
+  if(index == 19)
+    ui->sumTextEdit->setVisible(false);
 } // on_plotComboBox_currentIndexChanged
 
 void PlotMainWindow::on_boidSelectorSpinBox_valueChanged(int arg1){
@@ -448,6 +468,7 @@ void PlotMainWindow::createFourier( ){
   if(ui->plotComboBox->currentIndex( ) == 6 || ui->plotComboBox->currentIndex( )  == 7) type = 1;
   if(ui->plotComboBox->currentIndex( ) == 8 || ui->plotComboBox->currentIndex( )  == 9) type = 2;
   if(ui->plotComboBox->currentIndex( )  == 10) type = 3;
+  if(ui->plotComboBox->currentIndex( ) == 0) type = 4;
   int boidNr = (type == 3) ? ui->boidSelectorSpinBox->value( ) : -1;
   fourierWindow = new FFT(defaultPath, this, sim, idNr, fftIdNr, ui->plotMinSpinBox->value( ),
                           ui->plotMaxSpinBox->value( ), type, boidNr);

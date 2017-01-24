@@ -112,14 +112,11 @@ void MainWindow::initPressed( ){
   sim = NULL;
   Init( );
 } // ~MainWindow
+
 void MainWindow::runPausePressed(bool checked){
   if(checked)
     RunSim( );
 } // runPausePressed
-
-void MainWindow::noisePressed(bool checked){
-  sim->noiseType = checked;
-} // noisePressed
 
 void MainWindow::loadPressed( ){
   QString fileName = QFileDialog::getOpenFileName(this, tr("Open boid config"), defaultPath, tr("BoidInf Files (*.boidinf)"));
@@ -178,8 +175,12 @@ void MainWindow::Init( ){
 //  sim->trackCOM = ui->followCenterCheckBox->isChecked( );
   sim->trackSize = ui->resizeCheckBox->isChecked( );
   sim->zoomScale = (double) ui->zoomSlider->value( ) / 100.0;
-  //sim->noiseType = ui->noisePushButton->isChecked( );
-  sim->noiseType = ui->actionNoise->isChecked( );
+
+  if(ui->noiseTypeComboBox->currentIndex( ) == 0)
+    sim->noiseType = false;
+  else
+    sim->noiseType = true;
+  sim->forceType = ui->forceTypeComboBox->currentIndex( );
   sim->eta = ui->etaSpinBox->value( );
   sim->nrOfTimeStepsToRun = ui->nrOfTimeStepsSpinBox->value( );
   sim->vNought = ui->vNoughtSpinBox->value( );
@@ -405,6 +406,8 @@ void MainWindow::SaveCheckPoint(QString fileName){
 } // saveCheckPoint
 
 void MainWindow::LoadCheckPoint(QString fileName, bool hists){
+  on_emptyHistsPushButton_clicked( );
+  on_emptyVecsPushButton_clicked( );
   ifstream file(fileName.toStdString( ));
 
   string header;
@@ -429,8 +432,8 @@ void MainWindow::LoadCheckPoint(QString fileName, bool hists){
   qDebug( ) << "Eta" << eta;
   bool noiseType;
   lineStream1 >> noiseType;
-  ui->actionNoise->setChecked(noiseType);
-  //ui->noisePushButton->setChecked(noiseType);
+  if(noiseType)
+    ui->noiseTypeComboBox->setCurrentIndex(1);
   double vNought;
   lineStream1 >> vNought;
   ui->vNoughtSpinBox->setValue(vNought);
@@ -1081,39 +1084,39 @@ void MainWindow::on_emptyVecsPushButton_clicked( ){
 
 void MainWindow::scriptPressed( ){
   int timestepstorun = 100000;
-  int numIncA = 10;
-  int numIncB = 21;
+  int numIncA = 1;
+  int numIncB = 16;
   int stepsPerUpdate = 100;
 
   ui->etaSpinBox->setValue(1);
   ui->initPosComboBox->setCurrentIndex(1);
   ui->nrOfBoidsSpinBox->setValue(2000);
-  QString oldFileName = "/net/zilcken/data1/InfPlane/BoidPlots_PDiDRaF5.0000H1.0000v0.0030";
-  for(int i = 1; i < numIncA; i++){
-    //ui->etaSpinBox->setValue(0.15 + i * 0.05);
+  QString oldFileName = "/net/zilcken/data1/InfPlane/Eta1.00/BoidPlots_PDiDRaF1.7000H1.0000v0.0300";
+  for(int i = 0; i < numIncA; i++){
+    ui->etaSpinBox->setValue(1.00 - i * 0.1);
     //ui->informedAngleDoubleSpinBox->setValue((double) i / 100.0);
-    ui->forceConstantSpinBox->setValue(5 + double(i));
+    //ui->forceConstantSpinBox->setValue(5 + double(i));
     for(int j = 0; j < numIncB; j++){
       //ui->forceConstantSpinBox->setValue(50);
       //ui->forceConstantSpinBox->setValue(10.0 * pow(10, 2.0 * double(j)/21));
       //ui->etaSpinBox->setValue(double(j) * 0.025);
-      ui->vNoughtSpinBox->setValue(3.0 * pow(10,double(j)/10.0 - 3) );
-      ui->forceConstantSpinBox->setValue(5 + double(i));
+      //ui->vNoughtSpinBox->setValue(3.0 * pow(10,double(j)/10.0 - 3) );
+      //ui->forceConstantSpinBox->setValue(5 + double(i));
       qDebug( ) << "Start init...";
       Init( );
       qDebug( ) << "Done with init";
-      if(j > 0){
+      //if(j > 0){
         qDebug( ) << "Loading checkpoint...";
         LoadCheckPoint(oldFileName + ".boidInf",true);
-        ui->forceConstantSpinBox->setValue(5 + double(i));
-        ui->vNoughtSpinBox->setValue(3.0 * pow(10,double(j)/10.0 - 3) );
-        //ui->forceConstantSpinBox->setValue(16.5 + double(j) * 0.5);
-        //ui->etaSpinBox->setValue(double(j) * 0.025);
+        //ui->forceConstantSpinBox->setValue(5 + double(i));
+        //ui->vNoughtSpinBox->setValue(3.0 * pow(10,double(j)/10.0 - 3) );
+        ui->forceConstantSpinBox->setValue(1.7 - double(j) * 0.01);
+        //ui->etaSpinBox->setValue(1.00 - double(i) * 0.1);
         ClearVecs( );
         ClearHists( );
         sim->t = 0;
         ShowSim( );
-      }
+      //}
       for(int k = 0; k < timestepstorun;k++){
         sim->NextStep( );
 
@@ -1131,3 +1134,14 @@ void MainWindow::scriptPressed( ){
     qDebug( ) << "Done with inner loop, i" << i;
   } // for i
 } // scriptPressed
+
+void MainWindow::on_noiseTypeComboBox_currentIndexChanged(int index){
+  if(index == 0)
+    sim->noiseType = false;
+  else
+    sim->noiseType = true;
+} // on_noiseTypeComboBox_currentIndexChanged
+
+void MainWindow::on_forceTypeComboBox_currentIndexChanged(int index){
+  sim->forceType = index;
+} // on_comboBox_currentIndexChanged

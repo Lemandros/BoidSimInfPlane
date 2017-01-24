@@ -44,7 +44,6 @@ public slots:
   void CloseFourierWindow(int idNr);
   void initPressed( );
   void runPausePressed(bool checked);
-  void noisePressed(bool checked);
   void loadPressed( );
   void savePressed( );
   void saveDataPressed( );
@@ -160,6 +159,10 @@ private slots:
   void PrintHist(QString fileName);
   void on_runHistScriptPushButton_clicked( );
   void on_emptyVecsPushButton_clicked();
+
+  void on_noiseTypeComboBox_currentIndexChanged(int index);
+
+  void on_forceTypeComboBox_currentIndexChanged(int index);
 
 private:
   Ui::MainWindow *ui;

@@ -29,10 +29,11 @@ QImage BoidSim2D::ToQImage(uint size, bool antiAliasing) {
   qPainter.fillRect(QRect(0, 0, size, size), QColor(255, 255, 255));
   if(antiAliasing) qPainter.setRenderHint(QPainter::Antialiasing);
 
-  double W = max(fabs(avgPosGeom.x-minXd), fabs(avgPosGeom.x-maxXd));
-  double H = max(fabs(avgPosGeom.y-minYd), fabs(avgPosGeom.y-maxYd));
+  //double W = max(fabs(avgPosGeom.x-minXd), fabs(avgPosGeom.x-maxXd));
+  //double H = max(fabs(avgPosGeom.y-minYd), fabs(avgPosGeom.y-maxYd));
 
-  double Lmax = 2*max(W, H);
+  //double Lmax = 2*max(W, H);
+  double Lmax = maxSep;
   double drawSize;
   if(trackSize) drawSize = Lmax * 2.0 * zoomScale;
   else drawSize = drawSizeConst * zoomScale * 40.0;
@@ -529,13 +530,29 @@ void BoidSim2D::FillBoxes( ) {
   uint nX, nY;
   boxes.clear( );
 
+//  if (nBoxX <= 2 || nBoxX > 100)
+//    qDebug( ) << "Err mBoxX =" << nBoxX;
+
+//  if (nBoxY <= 2 || nBoxY > 100)
+//    qDebug( ) << "Err mBoxY =" << nBoxY;
+
   boxes = vector <vector <uvec> > (nBoxX, vector <uvec> (nBoxY));
   for (uint n = 0; n < boids.size( ); n++) {
     //nX = boids[n].r.x;
     //nY = boids[n].r.y;
     nX = boids[n].r.x - minX + 1;
     nY = boids[n].r.y - minY + 1;
+
+//    if (nX < 0 || nX >= nBoxX)
+//      qDebug( ) << "Error in nX, nX =" << nX << "nBoxX =" << nBoxX;
+
+//    if (nY < 0 || nY >= nBoxY)
+//      qDebug( ) << "Error in nY, nY =" << nY << "nBoxY =" << nBoxY << "Y pos =" << boids[n].r.y << "minY =" << minY << "maxY = " << maxY;
+
+
     boxes[nX][nY].push_back(n);
+//    if (boxes[nX][nY].size( ) > nrOfBoids)
+//      qDebug( ) << "Err, box too many boids inside, n =" << n << " size = " << boxes[nX][nY].size( );
   } // for
 
 } // FillBoxes
@@ -588,6 +605,8 @@ void BoidSim2D::MoveBoids( ){
     double polBulkY = 0.0;
     double polHullX = 0.0;
     double polHullY = 0.0;
+    double avgPosX = 0.0;
+    double avgPosY = 0.0;
     int mX = avgPosGeom.x; // int minX for reduction
     double mXd = avgPosGeom.x; // double minXd for reduction
     int Mx = mX; // int maxX for reduction
@@ -596,9 +615,18 @@ void BoidSim2D::MoveBoids( ){
     double mYd = avgPosGeom.y; // double minYd for reduction
     int My = mY; // int maxY for reduction
     double MyD = mYd; // int maxYd for reduction
+
+//    int mX = 1E6;
+//    double mXd = mX;
+//    int Mx = -1E6;
+//    double MxD = Mx;
+//    int mY = 1E6;
+//    double mYd = mY;
+//    int My = -1E6;
+//    double MyD = My;
     //double theta = 0.0;
     //double polTheta = P.Theta( );
-    #pragma omp parallel for reduction(+:hullCount, bulkCount, polX, polY, polBulkX, polBulkY, polHullX, polHullY), reduction(max:Mx, MxD, My, MyD), reduction(min:mX, mXd, mY, mYd)
+    #pragma omp parallel for reduction(+:hullCount, bulkCount, polX, polY, polBulkX, polBulkY, polHullX, polHullY, avgPosX, avgPosY), reduction(max:Mx, MxD, My, MyD), reduction(min:mX, mXd, mY, mYd)
     for (uint i = 0; i < boids.size( ); i++){
       Boid & b = boids[i];
       if(interactFast){
@@ -634,20 +662,20 @@ void BoidSim2D::MoveBoids( ){
 
       if(b.r.x < (double)mX)
         mX = b.r.x;
-      else if(b.r.x > (double)Mx)
+      if(b.r.x + 1  > (double)Mx)
         Mx = ceil(b.r.x) + 1;
       if(b.r.y < (double) mY)
         mY = b.r.y;
-      else if(b.r.y > (double) My)
+      if(b.r.y + 1 > (double) My)
         My = ceil(b.r.y) + 1;
 
       if(b.r.x < mXd)
         mXd = b.r.x;
-      else if(b.r.x > MxD)
+      if(b.r.x > MxD)
         MxD = b.r.x;
       if(b.r.y < mYd)
         mYd = b.r.y;
-      else if(b.r.y > MyD)
+      if(b.r.y > MyD)
         MyD = b.r.y;
 
       if(b.convHullNormal.x == 0.0 && b.convHullNormal.y == 0.0){ // b is not on hull
@@ -665,6 +693,9 @@ void BoidSim2D::MoveBoids( ){
       polY += b.v.y;
       b.prevAngle = b.curAngle;
       b.convHullNormal.Zero( );
+
+      avgPosX += b.r.x;
+      avgPosY += b.r.y;
     }
 
     minX = mX;
@@ -684,7 +715,7 @@ void BoidSim2D::MoveBoids( ){
     P /= nrOfBoids;
     Phull /= hullCount;
     Pbulk /= bulkCount;
-
+    Pold = P;
     Vector2D temp = p.back( );
     Vector2D temp2 = P;
     p.push_back(P);
@@ -715,6 +746,9 @@ void BoidSim2D::MoveBoids( ){
     curvCumAvg.push_back(curvCumAvg.back( ) + curv);
     curvHullCumAvg.push_back(curvHullCumAvg.back( ) + curvHull);
     curvBulkCumAvg.push_back(curvBulkCumAvg.back( ) + curvBulk);
+
+    avgPos = Vector2D(avgPosX, avgPosY);
+    avgPos/= double(nrOfBoids);
 } // MoveBoids
 
 // perform the simulation one timestep
@@ -795,14 +829,10 @@ void BoidSim2D::FindConvexHull( ){
 
   convexHull.resize(k - 1);
 
-
   convHullArea = 0.0;
   avgPosGeom.Zero( );
   convHullLength = 0.0;
   maxSep = 0.0;
-//  closestParAnglePlus = 10000;
-//  closestParAngleMin = -10000;
-//  closestPerpAngle = 10000;
   double polAngle = -P.Theta( );
   Vector2D pNorm = P.normalised( );
   for(uint i = 0; i < convexHull.size( ); i++){
@@ -810,10 +840,10 @@ void BoidSim2D::FindConvexHull( ){
 
     // find normal vector for boid b
     CalcHullNormal(b, i);
+
     // find angle
     FindHullAngle(b, pNorm, polAngle, i);
     UpdateDAngleHist(b, i);
-
 
     // check if all distances between boids on hull are smaller than 1
     // (if so, the entire interaction algorithm can be skipped and
@@ -850,6 +880,18 @@ void BoidSim2D::FindConvexHull( ){
 
 } //FindConvexHull
 
+BoidSim2D::Vector2D BoidSim2D::NormalNearestNeighbour(Vector2D t1, Vector2D t2, double t2Length){
+  double t1Length = t1.Length( );
+  Vector2D temp = (t2 - t1) * (2.0 / ( t1Length + t2Length ) );
+  Vector2D normal = (t2 / t2Length - t1 / t1Length ).normalised( );
+  Vector2D transverse = (normal.y, normal.x * (- 1.0));
+
+  if (temp.DotProduct(transverse) < 0.0) // make sure transverse vec points in direction of temp
+    transverse = transverse * (- 1.0);
+
+  return normal * (temp.DotProduct(normal)) + transverse * (temp.DotProduct(transverse));
+} // NormalNearestNeighbour
+
 void BoidSim2D::CalcHullNormal(Boid &b, uint i){
     Vector2D t1, t2;
 
@@ -861,13 +903,28 @@ void BoidSim2D::CalcHullNormal(Boid &b, uint i){
 
     double t2Length = t2.Length( );
     convHullLength += t2Length;
-
-    b.convHullNormal =  (t2 - t1) * (2.0 / (t1.Length( ) + t2Length ) );
+    switch(forceType){
+    case 0:
+      b.convHullNormal = NormalNearestNeighbour(t1, t2, t2Length);
+      break;
+    case 1:
+      b.convHullNormal = (t2 - t1) * (2.0 / (t1.Length( ) + t2Length ) );
+      break;
+    case 2:
+      b.convHullNormal = avgPosGeom - b.r;
+      break;
+    case 3:
+      b.convHullNormal = avgPos - b.r;
+      break;
+    case 4:
+      b.convHullNormal = (t2 / t2Length - t1.normalised( )) * (2.0 / (t1.Length( ) + t2Length ) );
+      break;
+    } // switch
 
     avgPosGeom += (b.r + boids[bNext].r) * (t2Length / 2.0);
 
     convHullArea += b.r.x * boids[bNext].r.y - b.r.y * boids[bNext].r.x;
-} // CalcHullNormalForce
+} // CalcHullNormalForceFarthestNeighbour
 
 void BoidSim2D::FindArea( ){
   convHullArea = 0.0;
@@ -885,30 +942,10 @@ void BoidSim2D::FindArea( ){
 
 void BoidSim2D::FindHullAngle(Boid &b, Vector2D pNorm, double polAngle, uint boidIndex){
   // find angle between polarisation vector and position on hull wrt the geometric center
-//  double theta = (b.r - avgPosGeomOld).Theta( ) - polAngle; // ang of boid in [-2PI, 2PI]
-//  theta += (theta > M_PI) ? - M_2PI : ((theta < - M_PI) ? M_2PI : 0);
-//  theta += M_PI;
   double theta = (b.r - avgPosGeomOld).Rotated(polAngle).Theta( ) + M_PI;
-  /*
-    if (theta >= 0 && theta < closestParAnglePlus) { // found new boid closest to polarization direction
-    closestParAnglePlus = theta;
-    parBoidNrA = convexHull[boidIndex];
-    parBoidNrB = (boidIndex > 0)? convexHull[boidIndex-1] : convexHull.back( );
 
-    Boid & kk = boids[parBoidNrB];
-    double thetaB = (kk.r - avgPosGeomOld).Theta( ) - polAngle; // ang of boid in [-2PI, 2PI]
-    thetaB += (thetaB > M_PI) ? - M_2PI : ((thetaB < - M_PI) ? M_2PI : 0);
-    thetaB += M_PI;
-    closestParAngleMin = thetaB;
-  } // if
-  */
-//  if (theta <= 0 && theta > closestParAngleMin) { // found new boid closest to polarization direction
-//    closestParAngleMin = theta;
-//    parBoidNrB = convexHull[boidIndex];
-//  } // if
 
   // update curAngle and prevAngle of current boid
-
   b.curAngle = theta;
 
   // find bind number for angular distribution of boids on the hull and add it

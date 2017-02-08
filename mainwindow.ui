@@ -53,6 +53,9 @@
             <string>Simulation parameters</string>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_2">
+            <property name="spacing">
+             <number>0</number>
+            </property>
             <item>
              <widget class="QLabel" name="simStepLabel">
               <property name="text">
@@ -310,12 +313,12 @@
                 </property>
                 <item>
                  <property name="text">
-                  <string>Nearest</string>
+                  <string>Furthest</string>
                  </property>
                 </item>
                 <item>
                  <property name="text">
-                  <string>Furthest</string>
+                  <string>Nearest</string>
                  </property>
                 </item>
                 <item>
@@ -348,7 +351,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QGroupBox" name="groupBox_2">
+          <widget class="QGroupBox" name="leadershipGroupBox">
            <property name="minimumSize">
             <size>
              <width>0</width>
@@ -362,15 +365,33 @@
             </size>
            </property>
            <property name="title">
-            <string>Informed boids parameters</string>
+            <string>Leadership</string>
            </property>
            <property name="flat">
             <bool>false</bool>
            </property>
            <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="checked">
             <bool>false</bool>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_3">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
             <item>
              <widget class="QSpinBox" name="nrOfInformedGroupsSpinBox">
               <property name="minimumSize">
@@ -471,6 +492,176 @@
           </widget>
          </item>
          <item>
+          <widget class="QGroupBox" name="groupBox_3">
+           <property name="maximumSize">
+            <size>
+             <width>212</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="title">
+            <string>List of Checkpoints</string>
+           </property>
+           <layout class="QGridLayout" name="gridLayout_3">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <item row="0" column="0">
+             <layout class="QVBoxLayout" name="verticalLayout_4">
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_3">
+                <item>
+                 <widget class="QPushButton" name="loadFileListPushButton">
+                  <property name="text">
+                   <string>Load List</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="clearListPushButton">
+                  <property name="text">
+                   <string>Clear</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <widget class="QTreeWidget" name="fileListTreeWidget">
+                <attribute name="headerDefaultSectionSize">
+                 <number>64</number>
+                </attribute>
+                <attribute name="headerMinimumSectionSize">
+                 <number>16</number>
+                </attribute>
+                <column>
+                 <property name="text">
+                  <string>Name</string>
+                 </property>
+                </column>
+                <column>
+                 <property name="text">
+                  <string>η</string>
+                 </property>
+                </column>
+                <column>
+                 <property name="text">
+                  <string>γ</string>
+                 </property>
+                </column>
+                <column>
+                 <property name="text">
+                  <string>FT</string>
+                 </property>
+                </column>
+                <column>
+                 <property name="text">
+                  <string>NB</string>
+                 </property>
+                </column>
+                <column>
+                 <property name="text">
+                  <string>NT</string>
+                 </property>
+                </column>
+                <column>
+                 <property name="text">
+                  <string>v0</string>
+                 </property>
+                </column>
+               </widget>
+              </item>
+              <item>
+               <layout class="QGridLayout" name="gridLayout_4">
+                <property name="leftMargin">
+                 <number>0</number>
+                </property>
+                <property name="topMargin">
+                 <number>0</number>
+                </property>
+                <property name="spacing">
+                 <number>0</number>
+                </property>
+                <item row="2" column="0">
+                 <widget class="QPushButton" name="insertToListPushButton">
+                  <property name="maximumSize">
+                   <size>
+                    <width>1000</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>Insert</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="1">
+                 <layout class="QHBoxLayout" name="horizontalLayout_2"/>
+                </item>
+                <item row="3" column="0">
+                 <widget class="QPushButton" name="deleteFromListPushButton">
+                  <property name="maximumSize">
+                   <size>
+                    <width>1000</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>Delete</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="1">
+                 <widget class="QPushButton" name="selectUpItemListPushButton">
+                  <property name="maximumSize">
+                   <size>
+                    <width>1000</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>↑</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="1">
+                 <widget class="QPushButton" name="selectDownItemListPushButton">
+                  <property name="maximumSize">
+                   <size>
+                    <width>1000</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>↓</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QPushButton" name="loadFromListPushButton">
+                  <property name="text">
+                   <string>Load</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QPushButton" name="saveFromListPushButton">
+                  <property name="text">
+                   <string>Save</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout"/>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
           <spacer name="verticalSpacer">
            <property name="orientation">
             <enum>Qt::Vertical</enum>
@@ -527,6 +718,9 @@
        </item>
        <item>
         <layout class="QVBoxLayout" name="verticalLayout_6">
+         <property name="spacing">
+          <number>0</number>
+         </property>
          <item>
           <widget class="QPushButton" name="emptyHistsPushButton">
            <property name="text">

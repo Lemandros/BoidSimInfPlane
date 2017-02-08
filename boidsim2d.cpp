@@ -595,16 +595,10 @@ void BoidSim2D::Interact( ){
 void BoidSim2D::MoveBoids( ){
 
     double PoldTheta = Pold.Theta( );
-    int hullCount = 0;
-    int bulkCount = 0;
 
     // temp vars for MP reduction
     double polX = 0.0;
     double polY = 0.0;
-    double polBulkX = 0.0;
-    double polBulkY = 0.0;
-    double polHullX = 0.0;
-    double polHullY = 0.0;
     double avgPosX = 0.0;
     double avgPosY = 0.0;
     int mX = avgPosGeom.x; // int minX for reduction
@@ -616,17 +610,7 @@ void BoidSim2D::MoveBoids( ){
     int My = mY; // int maxY for reduction
     double MyD = mYd; // int maxYd for reduction
 
-//    int mX = 1E6;
-//    double mXd = mX;
-//    int Mx = -1E6;
-//    double MxD = Mx;
-//    int mY = 1E6;
-//    double mYd = mY;
-//    int My = -1E6;
-//    double MyD = My;
-    //double theta = 0.0;
-    //double polTheta = P.Theta( );
-    #pragma omp parallel for reduction(+:hullCount, bulkCount, polX, polY, polBulkX, polBulkY, polHullX, polHullY, avgPosX, avgPosY), reduction(max:Mx, MxD, My, MyD), reduction(min:mX, mXd, mY, mYd)
+    #pragma omp parallel for reduction(+:polX, polY, avgPosX, avgPosY), reduction(max:Mx, MxD, My, MyD), reduction(min:mX, mXd, mY, mYd)
     for (uint i = 0; i < boids.size( ); i++){
       Boid & b = boids[i];
       if(interactFast){
@@ -678,16 +662,9 @@ void BoidSim2D::MoveBoids( ){
       if(b.r.y > MyD)
         MyD = b.r.y;
 
-      if(b.convHullNormal.x == 0.0 && b.convHullNormal.y == 0.0){ // b is not on hull
-        bulkCount++;
-        polBulkX += b.v.x;
-        polBulkY += b.v.y;
+      if(b.convHullNormal.x == 0.0 && b.convHullNormal.y == 0.0)// b is not on hull
         b.curAngle = 10;
-      }else{
-        hullCount++;
-        polHullX += b.v.x;
-        polHullY += b.v.y;
-      }
+
 
       polX += b.v.x;
       polY += b.v.y;
@@ -710,11 +687,11 @@ void BoidSim2D::MoveBoids( ){
     nBoxY = maxY - minY + 2;
 
     P = Vector2D(polX, polY);
-    Pbulk = Vector2D(polBulkX, polBulkY);
-    Phull = Vector2D(polHullX, polHullY);
+//    Pbulk = Vector2D(polBulkX, polBulkY);
+//    Phull = Vector2D(polHullX, polHullY);
     P /= nrOfBoids;
-    Phull /= hullCount;
-    Pbulk /= bulkCount;
+//    Phull /= hullCount;
+//    Pbulk /= bulkCount;
     Pold = P;
     Vector2D temp = p.back( );
     Vector2D temp2 = P;
@@ -724,28 +701,28 @@ void BoidSim2D::MoveBoids( ){
     double curv = temp.CrossProduct(temp2);
     curvatureVec.push_back(curv);
 
-    temp = pHull.back( );
-    temp2 = Phull;
-    pHull.push_back(Phull);
-    temp.Normalise( );
-    temp2.Normalise( );
-    double curvHull = temp.CrossProduct(temp2);
-    curvatureHullVec.push_back(curvHull);
+//    temp = pHull.back( );
+//    temp2 = Phull;
+//    pHull.push_back(Phull);
+//    temp.Normalise( );
+//    temp2.Normalise( );
+//    double curvHull = temp.CrossProduct(temp2);
+//    curvatureHullVec.push_back(curvHull);
 
-    temp = pBulk.back( );
-    temp2 = Pbulk;
-    pBulk.push_back(Pbulk);
-    temp.Normalise( );
-    temp2.Normalise( );
-    double curvBulk = temp.CrossProduct(temp2);
-    curvatureBulkVec.push_back(curvBulk);
+//    temp = pBulk.back( );
+//    temp2 = Pbulk;
+//    pBulk.push_back(Pbulk);
+//    temp.Normalise( );
+//    temp2.Normalise( );
+//    double curvBulk = temp.CrossProduct(temp2);
+//    curvatureBulkVec.push_back(curvBulk);
 
     polCumAvg.push_back(polCumAvg.back( ) + P.Length( ));
-    polBulkCumAvg.push_back(polBulkCumAvg.back( ) + Pbulk.Length( ));
-    polHullCumAvg.push_back(polHullCumAvg.back( ) + Phull.Length( ));
+//    polBulkCumAvg.push_back(polBulkCumAvg.back( ) + Pbulk.Length( ));
+//    polHullCumAvg.push_back(polHullCumAvg.back( ) + Phull.Length( ));
     curvCumAvg.push_back(curvCumAvg.back( ) + curv);
-    curvHullCumAvg.push_back(curvHullCumAvg.back( ) + curvHull);
-    curvBulkCumAvg.push_back(curvBulkCumAvg.back( ) + curvBulk);
+//    curvHullCumAvg.push_back(curvHullCumAvg.back( ) + curvHull);
+//    curvBulkCumAvg.push_back(curvBulkCumAvg.back( ) + curvBulk);
 
     avgPos = Vector2D(avgPosX, avgPosY);
     avgPos/= double(nrOfBoids);
@@ -753,11 +730,10 @@ void BoidSim2D::MoveBoids( ){
 
 // perform the simulation one timestep
 void BoidSim2D::NextStep( ) {
-
-  FillBoxes( );
-
-  if(!interactFast)
+  if(!interactFast){
+    FillBoxes( );
     Interact( );
+  } // if !interactFast
 
   MoveBoids( );
 
@@ -802,6 +778,100 @@ void BoidSim2D::InteractBoxes(BoidSim2D::uvec & box1) {
 /**
  CONVEX HULL FUNCTIONS
 **/
+void BoidSim2D::FindConvexHullInit( ){
+  avgPosGeomOld = avgPosGeom;
+  int k = 0;
+  convexHull.clear( );
+  convexHull = vector<uint>(2*boids.size( ));
+
+  //sort points lexicographically
+  sort(boids.begin( ), boids.end( ));
+  //minX = boids.front( ).r.x-1;
+  //maxX = boids.back( ).r.x+1;
+  //build lower hull
+  for(uint i = 0; i < boids.size( ); ++i){
+    BoidSim2D::Vector2D r = boids[i].r;
+    while(k >= 2 && r.CrossProduct(boids[convexHull[k-2]].r,boids[convexHull[k-1]].r) <= 0) k--;
+    convexHull[k++] = i;
+  }
+
+  //build upper hull
+  for(int i = boids.size( ) - 2, t = k + 1; i >= 0; i--){
+    BoidSim2D::Vector2D r = boids[i].r;
+    while(k >= t && r.CrossProduct(boids[convexHull[k-2]].r,boids[convexHull[k-1]].r) <= 0) k--;
+    convexHull[k++] = i;
+  }
+
+  convexHull.resize(k - 1);
+
+  convHullArea = 0.0;
+  avgPosGeom.Zero( );
+  convHullLength = 0.0;
+  maxSep = 0.0;
+  double polAngle = -P.Theta( );
+  Vector2D pNorm = P.normalised( );
+  Vector2D polHull = Vector2D(0.0, 0.0);
+  for(uint i = 0; i < convexHull.size( ); i++){
+    Boid &b = boids[convexHull[i]];
+
+    // find normal vector for boid b
+    CalcHullNormal(b, i);
+
+    // find angle
+    FindHullAngle(b, pNorm, polAngle, i);
+    UpdateDAngleHist(b, i);
+
+    // check if all distances between boids on hull are smaller than 1
+    // (if so, the entire interaction algorithm can be skipped and
+    // the average neighbour orientation can be extracted from the
+    // polarization)
+    for(uint j = i + 1; j < convexHull.size( ); j++){
+      double len = (boids[convexHull[i]].r - boids[convexHull[j]].r).Length( );
+      if(len > maxSep)
+        maxSep = len;
+    }
+    polHull += b.v;
+  }  // for
+
+  Pbulk = (P * double(nrOfBoids) - polHull) / (nrOfBoids - nrOfBoidsOnConvHull );
+  Phull = polHull / nrOfBoidsOnConvHull ;
+
+  pHull.push_back(Phull);
+  double curvHull = 0.0;
+  curvatureHullVec.push_back(curvHull);
+  pBulk.push_back(Pbulk);
+  double curvBulk = 0.0;
+  curvatureBulkVec.push_back(curvBulk);
+
+  polBulkCumAvg.push_back(Pbulk.Length( ));
+  polHullCumAvg.push_back(Phull.Length( ));
+  curvHullCumAvg.push_back(curvHull);
+  curvBulkCumAvg.push_back(curvBulk);
+
+  if(maxSep > 1.0) interactFast = false;
+  else interactFast = true;
+
+  avgPosGeom /= convHullLength;
+  avgPosGeomHistory.push_back(avgPosGeom);
+  if(trackCOM == -1) COM = avgPosGeom;
+  convHullArea /= 2.0;
+  convHullAreaVec.push_back(convHullArea);
+  areaCumAvg.push_back(convHullAreaVec.back( ) + convHullArea);
+  nrOfBoidsOnConvHull = k-1;
+  numBoidsOnHull.push_back(nrOfBoidsOnConvHull);
+
+  // update convexHullList:
+//  vector <Vector2D> curHull;
+//  for(uint i = 0; i < convexHull.size( ); i++){
+//    Boid &b = boids[convexHull[i]];Vector2D t1, t2;
+
+//    curHull.push_back(b.r);
+//  } // for
+//  if (this->t % 25 == 0 || t <= 2)
+//    convexHullList.push_back(curHull);
+
+} //FindConvexHullInit
+
 
 void BoidSim2D::FindConvexHull( ){
   avgPosGeomOld = avgPosGeom;
@@ -835,6 +905,7 @@ void BoidSim2D::FindConvexHull( ){
   maxSep = 0.0;
   double polAngle = -P.Theta( );
   Vector2D pNorm = P.normalised( );
+  Vector2D polHull = Vector2D(0.0, 0.0);
   for(uint i = 0; i < convexHull.size( ); i++){
     Boid &b = boids[convexHull[i]];
 
@@ -854,7 +925,30 @@ void BoidSim2D::FindConvexHull( ){
       if(len > maxSep)
         maxSep = len;
     }
+    polHull += b.v;
   }  // for
+  Pbulk = (P * double(nrOfBoids) - polHull) / (nrOfBoids - convexHull.size( ) );
+  Phull = polHull / convexHull.size( );
+
+  Vector2D temp = pHull.back( );
+  Vector2D temp2 = Phull;
+  pHull.push_back(Phull);
+  temp.Normalise( );
+  temp2.Normalise( );
+  double curvHull = temp.CrossProduct(temp2);
+  curvatureHullVec.push_back(curvHull);
+
+  temp = pBulk.back( );
+  temp2 = Pbulk;
+  pBulk.push_back(Pbulk);
+  temp.Normalise( );
+  temp2.Normalise( );
+  double curvBulk = temp.CrossProduct(temp2);
+  curvatureBulkVec.push_back(curvBulk);
+  polBulkCumAvg.push_back(polBulkCumAvg.back( ) + Pbulk.Length( ));
+  polHullCumAvg.push_back(polHullCumAvg.back( ) + Phull.Length( ));
+  curvHullCumAvg.push_back(curvHullCumAvg.back( ) + curvHull);
+  curvBulkCumAvg.push_back(curvBulkCumAvg.back( ) + curvBulk);
 
   if(maxSep > 1.0) interactFast = false;
   else interactFast = true;
@@ -904,19 +998,19 @@ void BoidSim2D::CalcHullNormal(Boid &b, uint i){
     double t2Length = t2.Length( );
     convHullLength += t2Length;
     switch(forceType){
-    case 0:
-      b.convHullNormal = NormalNearestNeighbour(t1, t2, t2Length);
-      break;
-    case 1:
+    case 0: // Furthest neighbour
       b.convHullNormal = (t2 - t1) * (2.0 / (t1.Length( ) + t2Length ) );
       break;
-    case 2:
+    case 1: // Furthest mirrored along normal
+      b.convHullNormal = NormalNearestNeighbour(t1, t2, t2Length);
+      break;
+    case 2: // Pointed toward center of hull
       b.convHullNormal = avgPosGeom - b.r;
       break;
-    case 3:
+    case 3: // Pointed toward mean position
       b.convHullNormal = avgPos - b.r;
       break;
-    case 4:
+    case 4: // Curvature
       b.convHullNormal = (t2 / t2Length - t1.normalised( )) * (2.0 / (t1.Length( ) + t2Length ) );
       break;
     } // switch

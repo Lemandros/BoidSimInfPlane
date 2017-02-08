@@ -275,6 +275,7 @@ public:
   void InteractBoxes(uvec & box1);
   void MoveBoids( );
   void FindConvexHull( );
+  void FindConvexHullInit( );
   void FindArea( );
   void FindHullAngle(Boid &b, Vector2D pNorm, double polAngle, uint boidIndex);
   void UpdateDAngleHist(Boid &b, uint i);

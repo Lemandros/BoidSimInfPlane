@@ -316,8 +316,10 @@ void PlotMainWindow::PlotFunction(QCustomPlot* plot, QComboBox* comboBox, QSpinB
     for (uint i = 0; i < this->sim->numBins; i++) {
       double dat = sim->dAngleHist[i].second / double(sim->dAngleHist[i].first);
       plot->graph( )->addData(double(i)/sim->dAngleHist.size( ) * M_2PI - M_PI, dat);
-      sum += dat;
-      sum2 += dat * dat;
+      if(sim->dAngleHist[i].first != 0){
+        sum += dat;
+        sum2 += dat * dat;
+      }
     } // for
     plot->rescaleAxes( );
     ui->sumTextEdit->setText("Sum: " + QString::number(sum) + "\nSum2: " + QString::number(sum2) + "\nStdDev: " + QString::number(sqrt(sum2 - sum*sum/(sim->numBins*sim->numBins))));
@@ -328,8 +330,10 @@ void PlotMainWindow::PlotFunction(QCustomPlot* plot, QComboBox* comboBox, QSpinB
     for (uint i = 0; i < sim->radiusHist.size( ); i++) {
       double dat = sim->radiusHist[i] / double(sim->angHist[i]);
       plot->graph( )->addData(double(i)/sim->radiusHist.size( ) * M_2PI - M_PI, dat);
-      sum += dat;
-      sum2 += dat * dat;
+      if(sim->angHist[i] != 0){
+        sum += dat;
+        sum2 += dat * dat;
+      }
     } // for
     plot->yAxis->setRangeLower(-1.0);
     plot->rescaleAxes( );

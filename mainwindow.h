@@ -158,11 +158,33 @@ private slots:
   void saveHistsPressed( );
   void PrintHist(QString fileName);
   void on_runHistScriptPushButton_clicked( );
-  void on_emptyVecsPushButton_clicked();
-
+  void on_emptyVecsPushButton_clicked( );
+  void ReadHeader(QString fileName, QTreeWidgetItem* item);
   void on_noiseTypeComboBox_currentIndexChanged(int index);
 
   void on_forceTypeComboBox_currentIndexChanged(int index);
+
+
+  void on_insertToListPushButton_clicked( );
+
+  void on_fileListTreeWidget_doubleClicked(const QModelIndex &index);
+
+  void on_deleteFromListPushButton_clicked( );
+
+  void on_loadFileListPushButton_clicked( );
+  void AddCheckPointToList(QString fileName);
+
+  void on_clearListPushButton_clicked( );
+
+  void on_selectUpItemListPushButton_clicked( );
+
+  void on_selectDownItemListPushButton_clicked( );
+
+  void on_leadershipGroupBox_toggled(bool arg1);
+
+  void on_loadFromListPushButton_clicked( );
+
+  void on_saveFromListPushButton_clicked( );
 
 private:
   Ui::MainWindow *ui;

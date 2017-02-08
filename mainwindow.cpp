@@ -13,7 +13,9 @@
 #include <cstring>
 #include <istream>
 #include <iostream>
-#include <qdesktopservices.h>
+#include <QTreeView>
+#include <QTreeWidget>
+#include <QTreeWidgetItem>
 
 #define M_2PI      6.28318530717958647692
 
@@ -32,7 +34,6 @@ MainWindow::MainWindow(QWidget *parent) :
     OS = false;
 #endif
 
-  //this->setAttribute(Qt::WA_DeleteOnClose);
 
 
   if(OS) defaultPath = "/net/zilcken/data1/InfPlane/";
@@ -45,8 +46,17 @@ MainWindow::MainWindow(QWidget *parent) :
   ui->nrOfInformedBoidsInGroupSpinBox->setEnabled(false);
   ui->updateInfBoidsPushButton->setEnabled(false);
   ui->groupInfo->setEnabled(false);
+
   ui->boidTrackerSpinBox->setEnabled(false);
+
+  ui->informedAngleDoubleSpinBox->setVisible(false);
+  ui->informedGroupSelectorSpinBox->setVisible(false);
+  ui->nrOfInformedBoidsInGroupSpinBox->setVisible(false);
+  ui->updateInfBoidsPushButton->setVisible(false);
+  ui->groupInfo->setVisible(false);
+
   LoadSettingsFromFile( );
+
   ui->nrOfInformedBoidsInGroupSpinBox->setMaximum(ui->nrOfBoidsSpinBox->value( ));
   qDebug( ) << "Init...";
   Init( );
@@ -180,6 +190,7 @@ void MainWindow::Init( ){
     sim->noiseType = false;
   else
     sim->noiseType = true;
+
   sim->forceType = ui->forceTypeComboBox->currentIndex( );
   sim->eta = ui->etaSpinBox->value( );
   sim->nrOfTimeStepsToRun = ui->nrOfTimeStepsSpinBox->value( );
@@ -187,6 +198,7 @@ void MainWindow::Init( ){
   sim->nrOfInformedGroups = ui->nrOfInformedGroupsSpinBox->value( );
   nrOfUninformedBoids = ui->nrOfBoidsSpinBox->value( );
   sim->forceConstant = ui->forceConstantSpinBox->value( );
+
   sim->InitBoids(ui->initPosComboBox->currentIndex( ), ui->initDirectionComboBox->currentIndex( ));
   sim->FillBoxes( );
   sim->drawDirection = ui->drawDirectionCheckBox->isChecked( );
@@ -194,10 +206,11 @@ void MainWindow::Init( ){
   sim->indices.resize(ui->nrOfBoidsSpinBox->value( ));
   iota(sim->indices.begin( ),sim->indices.end( ),0);
   sim->SetInformedBoids(informedGroups);
-  sim->FindConvexHull( );
+  sim->FindConvexHullInit( );
   sim->CalcP( );
   sim->FindArea( );
   PrintStatusBar( );
+
   qDebug( ) << "Done with init. Showing sim...";
   ShowSim( );
 }
@@ -241,7 +254,7 @@ void MainWindow::ShowSim( ) {
 
   ui->simStepLabel->setText("Simulation step: " + QString::number(sim->t));
   if(ui->saveFramesCheckBox->isChecked( )){
-    QString fileName = defaultPath + "frame_" + QString::number(screencounter).rightJustified(5, '0') + ".png";
+    QString fileName = defaultPath + ui->framePrefixLineEdit->text( ) + QString::number(screencounter).rightJustified(5, '0') + ".png";
     img.save(fileName);
     screencounter++;
   } // if saveFrames
@@ -277,25 +290,6 @@ void MainWindow::updateText( ) {
 
 // updates the spinboxes if number of informed groups changes
 void MainWindow::on_nrOfInformedGroupsSpinBox_valueChanged(int arg1) {
-  if (arg1 == 0) {
-    ui->informedAngleDoubleSpinBox->setEnabled(false);
-    ui->informedGroupSelectorSpinBox->setEnabled(false);
-    ui->nrOfInformedBoidsInGroupSpinBox->setEnabled(false);
-    ui->updateInfBoidsPushButton->setEnabled(false);
-    ui->groupInfo->setEnabled(false);
-    ui->informedGroupSelectorSpinBox->setValue(1);
-    ui->nrOfInformedBoidsInGroupSpinBox->setValue(0);
-    ui->informedAngleDoubleSpinBox->setValue(0.0);
-
-  } // if
-  else {
-    ui->informedAngleDoubleSpinBox->setEnabled(true);
-    ui->informedGroupSelectorSpinBox->setEnabled(true);
-    ui->nrOfInformedBoidsInGroupSpinBox->setEnabled(true);
-    ui->updateInfBoidsPushButton->setEnabled(true);
-    ui->groupInfo->setEnabled(true);
-  } // else
-
   // if nr of informed groups decreases, remove elements from groups vector
   // and change value of the group selector if it is larger than current nr
   // of groups.
@@ -381,7 +375,8 @@ void MainWindow::SaveCheckPoint(QString fileName){
         << sim->noiseType << "\t\t" << sim->vNought << "\t" << sim->seed << "\t\t"
         << sim->t << "\t\t" << informedGroups.size( ) << "\t"
         << ui->initPosComboBox->currentIndex( ) << "\t" << ui->initDirectionComboBox->currentIndex( ) << "\t"
-        << ui->forceConstantSpinBox->value( ) << "\t" << sim->angHist.size( ) << "\t" << sim->avgPosGeom.x << "\t" << sim->avgPosGeom.y << endl << "# ";
+        << ui->forceConstantSpinBox->value( ) << "\t" << sim->angHist.size( ) << "\t" << sim->avgPosGeom.x << "\t" << sim->avgPosGeom.y
+        << "\t" << ui->forceTypeComboBox->currentIndex( ) << endl << "# ";
 
   for(uint i = 0; i < informedGroups.size( ); i++)
     file << informedGroups[i].first << "\t" << informedGroups[i].second << "\t";
@@ -465,6 +460,14 @@ void MainWindow::LoadCheckPoint(QString fileName, bool hists){
     sim->dAngleHist.clear( );
     sim->radiusHist.clear( );
   }
+  double GCx = 0.0;
+  double GCy = 0.0;
+  lineStream1 >> GCx;
+  lineStream1 >> GCy;
+  BoidSim2D::Vector2D GC = BoidSim2D::Vector2D(GCx, GCy);
+  uint forceType = 0;
+  lineStream1 >> forceType;
+  ui->forceTypeComboBox->setCurrentIndex(forceType);
 
   string groupInfo;
   getline(file, groupInfo);
@@ -693,7 +696,7 @@ QString MainWindow::FileName( ){
   datFileName.clear( );
   datFileName.precision(4);
   datFileName.setf(ios::fixed, ios::floatfield);
-  datFileName << defaultPath.toStdString( ) << "BoidPlots_";
+  datFileName << defaultPath.toStdString( );
 
   switch(ui->initPosComboBox->currentIndex( )){
     case 0:  datFileName << "PRa";  break;
@@ -712,6 +715,7 @@ QString MainWindow::FileName( ){
   datFileName << "F" << ui->forceConstantSpinBox->value( ); // force
   datFileName << "H" << ui->etaSpinBox->value( ); // noise
   datFileName << "v" << ui->vNoughtSpinBox->value( ); // speed
+  datFileName << "T" << ui->forceTypeComboBox->currentIndex( ); // force type
 
   if(ui->nrOfInformedGroupsSpinBox->value( ) > 0){
     datFileName << "NG" << ui->nrOfInformedGroupsSpinBox->value( );
@@ -919,7 +923,8 @@ void MainWindow::WriteSettingsToFile( ){
        << "Rho " << ui->rhoSpinBox->value( ) << endl
        << "Gamma " << ui->forceConstantSpinBox->value( ) << endl
        << "Pos " << ui->initPosComboBox->currentIndex( ) << endl
-       << "Dir " << ui->initDirectionComboBox->currentIndex( ) << endl;
+       << "Dir " << ui->initDirectionComboBox->currentIndex( ) << endl
+       << "Force " << ui->forceTypeComboBox->currentIndex( ) << endl;
   file.close( );
 } // WriteSettingsToFile
 
@@ -984,6 +989,12 @@ void MainWindow::LoadSettingsFromFile( ){
   ssDir >> intVal;
   ui->initDirectionComboBox->setCurrentIndex(intVal);
 
+  getline(file, line); // get position init line
+  istringstream ssForce(line);
+  ssForce >> temp;
+  ssForce >> intVal;
+  ui->forceTypeComboBox->setCurrentIndex(intVal);
+
   file.close( );
 } // LoadSettingsFromFile
 
@@ -1047,7 +1058,7 @@ void MainWindow::PrintHist(QString fileName){
 
   for(uint i = 0; i < fileNames.size( ); i++){
     Init( );
-    LoadCheckPoint(fileNames[i] + ".boidInf",false);
+    LoadCheckPoint(fileNames[i] + ".boidInf", true);
     on_emptyHistsPushButton_clicked( );
     on_emptyVecsPushButton_clicked( );
 
@@ -1082,26 +1093,264 @@ void MainWindow::on_emptyVecsPushButton_clicked( ){
   ClearVecs( );
 } // on_emptyVecsPushButton_clicked
 
+void MainWindow::on_noiseTypeComboBox_currentIndexChanged(int index){
+  if(index == 0)
+    sim->noiseType = false;
+  else
+    sim->noiseType = true;
+} // on_noiseTypeComboBox_currentIndexChanged
+
+void MainWindow::on_forceTypeComboBox_currentIndexChanged(int index){
+  sim->forceType = index;
+} // on_comboBox_currentIndexChanged
+
+void MainWindow::ReadHeader(QString fileName, QTreeWidgetItem* item){
+
+  ifstream file(fileName.toStdString( ));
+
+  string header;
+  getline(file, header);
+
+  string info;
+  getline(file, info);
+  istringstream lineStream1(info);
+  string hash;
+  lineStream1 >> hash;
+  uint nrOfBoids;
+  lineStream1 >> nrOfBoids;
+
+
+  double rho;
+  lineStream1 >> rho;
+
+  double eta;
+  lineStream1 >> eta;
+
+  bool noiseType;
+  lineStream1 >> noiseType;
+
+  double vNought;
+  lineStream1 >> vNought;
+
+  int seed;
+  lineStream1 >> seed;
+
+  uint timesteps;
+  lineStream1 >> timesteps;
+
+  uint groups;
+  lineStream1 >> groups;
+
+  int posInfo;
+  lineStream1 >> posInfo;
+
+  int dirInfo;
+  lineStream1 >> dirInfo;
+
+  double forceConst;
+  lineStream1 >> forceConst;
+  uint nrBins;
+  lineStream1 >> nrBins;
+
+  double GCx = 0.0;
+  double GCy = 0.0;
+  lineStream1 >> GCx;
+  lineStream1 >> GCy;
+
+  uint forceType = 0;
+  lineStream1 >> forceType;
+
+
+  string groupInfo;
+  getline(file, groupInfo);
+  istringstream lineStream2(groupInfo);
+  lineStream2 >> hash;
+  informedGroups.clear( );
+  for(uint i = 0; i < groups; i++){
+    //ui->informedGroupSelectorSpinBox->setValue(i+1);
+    uint nrOfBoidsInGroup;
+    lineStream2 >> nrOfBoidsInGroup;
+    //ui->nrOfInformedBoidsInGroupSpinBox->setValue(nrOfBoidsInGroup);
+    double angle;
+    lineStream2 >> angle;
+    //ui->informedAngleDoubleSpinBox->setValue(angle);
+  }
+  file.close( );
+  QString noiseTypeString = "V";
+  if(noiseType) noiseTypeString = "S";
+  QString forceTypeString;
+  forceTypeString.clear( );
+  switch(forceType){
+  case 0:
+    forceTypeString = "FN";
+    break;
+  case 1:
+    forceTypeString = "NN";
+    break;
+  case 2:
+    forceTypeString = "Ce";
+    break;
+  case 3:
+    forceTypeString = "Me";
+    break;
+  case 4:
+    forceTypeString = "Cu";
+    break;
+  } // switch
+  item->setText(0, fileName);
+  item->setText(1, QString::number(eta));
+  item->setText(2, QString::number(forceConst));
+  item->setText(3, forceTypeString);
+  item->setText(4, QString::number(nrOfBoids));
+  item->setText(5, noiseTypeString);
+  item->setText(6, QString::number(vNought));
+} // ReadHeader
+
+void MainWindow::on_insertToListPushButton_clicked( ){
+  QStringList fileNames = QFileDialog::getOpenFileNames(this, tr("Open boid configs"), defaultPath, tr("BoidInf Files (*.boidinf)"));
+  if(!fileNames.isEmpty( ))
+    for(uint i = 0; i < fileNames.size( ); i++)
+      AddCheckPointToList(fileNames[i]);
+} //on_insertToListPushButton_clicked
+
+void MainWindow::AddCheckPointToList(QString fileName){
+  QTreeWidgetItem *temp = new QTreeWidgetItem(ui->fileListTreeWidget);
+  ReadHeader(fileName, temp);
+  ui->fileListTreeWidget->addTopLevelItem(temp);
+  ui->fileListTreeWidget->resizeColumnToContents(1);
+  ui->fileListTreeWidget->resizeColumnToContents(2);
+  ui->fileListTreeWidget->resizeColumnToContents(3);
+  ui->fileListTreeWidget->resizeColumnToContents(4);
+  ui->fileListTreeWidget->resizeColumnToContents(5);
+  ui->fileListTreeWidget->resizeColumnToContents(6);
+}
+
+void MainWindow::on_fileListTreeWidget_doubleClicked(const QModelIndex &index){
+  QString fileName = ui->fileListTreeWidget->currentItem( )->data(0,0).toString( );
+  if(!fileName.isEmpty( )){
+    LoadCheckPoint(fileName, true);
+    for (uint i = 0; i < plotMainWindows.size( ); i++) {
+      if (plotMainWindows[i] != NULL)
+        plotMainWindows[i]->UpdateWindow( );
+    } // for
+  } // if
+} // on_fileListTreeWidget_doubleclicked
+
+void MainWindow::on_deleteFromListPushButton_clicked( ){
+  QTreeWidgetItem *temp = ui->fileListTreeWidget->takeTopLevelItem(ui->fileListTreeWidget->currentIndex( ).row( ));
+} // on_deleteFromListPushButton_clicked
+
+void MainWindow::on_loadFileListPushButton_clicked( ){
+  QString fileName = QFileDialog::getOpenFileName(this, tr("Open paths file"), defaultPath, tr("BoidInf Files (*.txt)"));
+  if(!fileName.isEmpty( )){
+    ifstream file(fileName.toStdString( ));
+    string line;
+    while(getline(file, line))
+      AddCheckPointToList(QString::fromStdString(line));
+    file.close( );
+  } // if
+
+} // on_loadFileListPushButton_clicked
+
+void MainWindow::on_clearListPushButton_clicked( ){
+  ui->fileListTreeWidget->clear( );
+} // on_clearListPushButton_clicked
+
+void MainWindow::on_selectUpItemListPushButton_clicked( ){
+  int index = ui->fileListTreeWidget->currentIndex( ).row( );
+  if(ui->fileListTreeWidget->topLevelItemCount( ) != 0 && ui->fileListTreeWidget->selectedItems( ).size( ) > 0){
+    if(index != 0){
+      ui->fileListTreeWidget->setCurrentItem(ui->fileListTreeWidget->itemAbove(ui->fileListTreeWidget->currentItem( )));
+      QString fileName = ui->fileListTreeWidget->currentItem( )->data(0,0).toString( );
+      if(!fileName.isEmpty( )){
+        LoadCheckPoint(fileName, true);
+        for (uint i = 0; i < plotMainWindows.size( ); i++) {
+          if (plotMainWindows[i] != NULL)
+            plotMainWindows[i]->UpdateWindow( );
+        } // for
+      }
+    } // if
+  } // if
+} // on_selectUpItemListPushButton_clicked
+
+void MainWindow::on_selectDownItemListPushButton_clicked( ){
+  int index = ui->fileListTreeWidget->currentIndex( ).row( );
+  if(ui->fileListTreeWidget->topLevelItemCount( ) != 0 && ui->fileListTreeWidget->selectedItems( ).size( ) > 0){
+    if(index != ui->fileListTreeWidget->topLevelItemCount( ) - 1){
+      ui->fileListTreeWidget->setCurrentItem(ui->fileListTreeWidget->itemBelow(ui->fileListTreeWidget->currentItem( )));
+      QString fileName = ui->fileListTreeWidget->currentItem( )->data(0,0).toString( );
+      if(!fileName.isEmpty( )){
+        LoadCheckPoint(fileName, true);
+        for (uint i = 0; i < plotMainWindows.size( ); i++) {
+          if (plotMainWindows[i] != NULL)
+            plotMainWindows[i]->UpdateWindow( );
+        }
+      } // for
+    } // if
+  } // if
+} // on_selectDownItemListPushButton_clicked
+
+void MainWindow::on_leadershipGroupBox_toggled(bool arg1){
+
+  ui->informedAngleDoubleSpinBox->setEnabled(arg1);
+  ui->informedGroupSelectorSpinBox->setEnabled(arg1);
+  ui->nrOfInformedBoidsInGroupSpinBox->setEnabled(arg1);
+  ui->updateInfBoidsPushButton->setEnabled(arg1);
+  ui->groupInfo->setEnabled(arg1);
+
+  ui->informedAngleDoubleSpinBox->setVisible(arg1);
+  ui->informedGroupSelectorSpinBox->setVisible(arg1);
+  ui->nrOfInformedBoidsInGroupSpinBox->setVisible(arg1);
+  ui->updateInfBoidsPushButton->setVisible(arg1);
+  ui->groupInfo->setVisible(arg1);
+
+  if(arg1){
+    ui->informedGroupSelectorSpinBox->setValue(1);
+    ui->nrOfInformedBoidsInGroupSpinBox->setValue(0);
+    ui->informedAngleDoubleSpinBox->setValue(0.0);
+  }
+} // on_leadershipGroupBox_toggled
+
+void MainWindow::on_loadFromListPushButton_clicked( ){
+  QString fileName = ui->fileListTreeWidget->currentItem( )->data(0,0).toString( );
+  if(!fileName.isEmpty( ))
+    LoadCheckPoint(fileName, true);
+  for (uint i = 0; i < plotMainWindows.size( ); i++) {
+    if (plotMainWindows[i] != NULL)
+      plotMainWindows[i]->UpdateWindow( );
+  } // for
+} // on_loadFromListPushButton_clicked
+
+void MainWindow::on_saveFromListPushButton_clicked( ){
+  QString fileName = ui->fileListTreeWidget->currentItem( )->data(0,0).toString( );
+  if(!fileName.isEmpty( ))
+    SaveCheckPoint(fileName);
+} // on_saveFromListPushButton_clicked
+
 void MainWindow::scriptPressed( ){
   int timestepstorun = 100000;
   int numIncA = 1;
-  int numIncB = 16;
+  int numIncB = 3;
   int stepsPerUpdate = 100;
 
   ui->etaSpinBox->setValue(1);
   ui->initPosComboBox->setCurrentIndex(1);
   ui->nrOfBoidsSpinBox->setValue(2000);
-  QString oldFileName = "/net/zilcken/data1/InfPlane/Eta1.00/BoidPlots_PDiDRaF1.7000H1.0000v0.0300";
+  QString oldFileName = "/net/zilcken/data1/InfPlane/NearNeighbour/Eta0.40/PDiDRaF7.0000H0.4000v0.0300T1";
   for(int i = 0; i < numIncA; i++){
-    ui->etaSpinBox->setValue(1.00 - i * 0.1);
+    //ui->etaSpinBox->setValue(0.6 - i * 0.1);
     //ui->informedAngleDoubleSpinBox->setValue((double) i / 100.0);
-    //ui->forceConstantSpinBox->setValue(5 + double(i));
+    ui->forceConstantSpinBox->setValue(1 + double(i));
+    ui->forceTypeComboBox->setCurrentIndex(3);
     for(int j = 0; j < numIncB; j++){
+      //ui->forceConstantSpinBox->setValue(10 - double(j));
+      //ui->etaSpinBox->setValue(0.05 + double(j) * 0.05);
       //ui->forceConstantSpinBox->setValue(50);
       //ui->forceConstantSpinBox->setValue(10.0 * pow(10, 2.0 * double(j)/21));
       //ui->etaSpinBox->setValue(double(j) * 0.025);
       //ui->vNoughtSpinBox->setValue(3.0 * pow(10,double(j)/10.0 - 3) );
       //ui->forceConstantSpinBox->setValue(5 + double(i));
+      //ui->forceTypeComboBox->setCurrentIndex(3);
       qDebug( ) << "Start init...";
       Init( );
       qDebug( ) << "Done with init";
@@ -1110,13 +1359,16 @@ void MainWindow::scriptPressed( ){
         LoadCheckPoint(oldFileName + ".boidInf",true);
         //ui->forceConstantSpinBox->setValue(5 + double(i));
         //ui->vNoughtSpinBox->setValue(3.0 * pow(10,double(j)/10.0 - 3) );
-        ui->forceConstantSpinBox->setValue(1.7 - double(j) * 0.01);
-        //ui->etaSpinBox->setValue(1.00 - double(i) * 0.1);
+        //ui->forceTypeComboBox->setCurrentIndex(3);
+        //ui->forceConstantSpinBox->setValue(10 - double(j));
+        ui->forceConstantSpinBox->setValue(8 + double(j));
+        //ui->etaSpinBox->setValue(0.1 + double(i) * 0.1);
+        //ui->etaSpinBox->setValue(0.05 + double(j) * 0.05);
         ClearVecs( );
         ClearHists( );
         sim->t = 0;
         ShowSim( );
-      //}
+   //   }
       for(int k = 0; k < timestepstorun;k++){
         sim->NextStep( );
 
@@ -1135,13 +1387,3 @@ void MainWindow::scriptPressed( ){
   } // for i
 } // scriptPressed
 
-void MainWindow::on_noiseTypeComboBox_currentIndexChanged(int index){
-  if(index == 0)
-    sim->noiseType = false;
-  else
-    sim->noiseType = true;
-} // on_noiseTypeComboBox_currentIndexChanged
-
-void MainWindow::on_forceTypeComboBox_currentIndexChanged(int index){
-  sim->forceType = index;
-} // on_comboBox_currentIndexChanged

@@ -28,7 +28,7 @@
    </property>
    <layout class="QGridLayout" name="gridLayout_2">
     <item row="0" column="0">
-     <widget class="QFrame" name="frame">
+     <widget class="QFrame" name="centralWidgetHorizontalLayout">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
         <horstretch>1</horstretch>
@@ -37,12 +37,12 @@
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_4">
        <item>
-        <layout class="QVBoxLayout" name="verticalLayout">
+        <layout class="QVBoxLayout" name="leftToolBarVerticalLayout">
          <property name="sizeConstraint">
           <enum>QLayout::SetFixedSize</enum>
          </property>
          <item>
-          <widget class="QGroupBox" name="groupBox">
+          <widget class="QGroupBox" name="paramsGroupBox">
            <property name="maximumSize">
             <size>
              <width>212</width>
@@ -492,7 +492,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QGroupBox" name="groupBox_3">
+          <widget class="QGroupBox" name="listGroupBox">
            <property name="maximumSize">
             <size>
              <width>212</width>
@@ -507,9 +507,9 @@
              <number>0</number>
             </property>
             <item row="0" column="0">
-             <layout class="QVBoxLayout" name="verticalLayout_4">
+             <layout class="QVBoxLayout" name="listVerticalLayout">
               <item>
-               <layout class="QHBoxLayout" name="horizontalLayout_3">
+               <layout class="QHBoxLayout" name="listUpperHorizontalLayout">
                 <item>
                  <widget class="QPushButton" name="loadFileListPushButton">
                   <property name="text">
@@ -572,7 +572,7 @@
                </widget>
               </item>
               <item>
-               <layout class="QGridLayout" name="gridLayout_4">
+               <layout class="QGridLayout" name="listGridLayout">
                 <property name="leftMargin">
                  <number>0</number>
                 </property>
@@ -586,7 +586,7 @@
                  <widget class="QPushButton" name="insertToListPushButton">
                   <property name="maximumSize">
                    <size>
-                    <width>1000</width>
+                    <width>96</width>
                     <height>16777215</height>
                    </size>
                   </property>
@@ -594,9 +594,6 @@
                    <string>Insert</string>
                   </property>
                  </widget>
-                </item>
-                <item row="4" column="1">
-                 <layout class="QHBoxLayout" name="horizontalLayout_2"/>
                 </item>
                 <item row="3" column="0">
                  <widget class="QPushButton" name="deleteFromListPushButton">
@@ -615,7 +612,7 @@
                  <widget class="QPushButton" name="selectUpItemListPushButton">
                   <property name="maximumSize">
                    <size>
-                    <width>1000</width>
+                    <width>96</width>
                     <height>16777215</height>
                    </size>
                   </property>
@@ -628,7 +625,7 @@
                  <widget class="QPushButton" name="selectDownItemListPushButton">
                   <property name="maximumSize">
                    <size>
-                    <width>1000</width>
+                    <width>96</width>
                     <height>16777215</height>
                    </size>
                   </property>
@@ -639,22 +636,51 @@
                 </item>
                 <item row="1" column="0">
                  <widget class="QPushButton" name="loadFromListPushButton">
+                  <property name="maximumSize">
+                   <size>
+                    <width>96</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
                   <property name="text">
                    <string>Load</string>
                   </property>
                  </widget>
                 </item>
                 <item row="1" column="1">
-                 <widget class="QPushButton" name="saveFromListPushButton">
-                  <property name="text">
-                   <string>Save</string>
+                 <layout class="QHBoxLayout" name="listSaveHorizontalLayout">
+                  <property name="spacing">
+                   <number>0</number>
                   </property>
-                 </widget>
+                  <item>
+                   <widget class="QPushButton" name="saveFromListPushButton">
+                    <property name="maximumSize">
+                     <size>
+                      <width>47</width>
+                      <height>16777215</height>
+                     </size>
+                    </property>
+                    <property name="text">
+                     <string>Save</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="saveAllFromListPushButton">
+                    <property name="maximumSize">
+                     <size>
+                      <width>47</width>
+                      <height>16777215</height>
+                     </size>
+                    </property>
+                    <property name="text">
+                     <string>SaveA</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
                 </item>
                </layout>
-              </item>
-              <item>
-               <layout class="QHBoxLayout" name="horizontalLayout"/>
               </item>
              </layout>
             </item>
@@ -717,7 +743,7 @@
         </widget>
        </item>
        <item>
-        <layout class="QVBoxLayout" name="verticalLayout_6">
+        <layout class="QVBoxLayout" name="rightToolBarVerticalLayout">
          <property name="spacing">
           <number>0</number>
          </property>
@@ -817,7 +843,7 @@
           </widget>
          </item>
          <item>
-          <layout class="QGridLayout" name="gridLayout">
+          <layout class="QGridLayout" name="viewMoveGridLayout">
            <item row="1" column="1">
             <widget class="QPushButton" name="upArrowPushButton">
              <property name="maximumSize">
@@ -969,16 +995,6 @@
           </widget>
          </item>
          <item>
-          <widget class="QCheckBox" name="drawCrossCheckBox">
-           <property name="text">
-            <string>Cross</string>
-           </property>
-           <property name="checked">
-            <bool>false</bool>
-           </property>
-          </widget>
-         </item>
-         <item>
           <widget class="QCheckBox" name="saveFramesCheckBox">
            <property name="text">
             <string>Save frames</string>
@@ -1013,7 +1029,7 @@
           </widget>
          </item>
          <item>
-          <spacer name="verticalSpacer_3">
+          <spacer name="rightToolBarVerticalSpacer">
            <property name="orientation">
             <enum>Qt::Vertical</enum>
            </property>

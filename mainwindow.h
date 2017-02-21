@@ -120,8 +120,6 @@ private slots:
 
   void on_drawBoidsCheckBox_toggled(bool checked);
 
-  void on_drawCrossCheckBox_toggled(bool checked);
-
   void on_updateInfBoidsPushButton_clicked();
 
   void on_emptyHistsPushButton_clicked();
@@ -185,6 +183,8 @@ private slots:
   void on_loadFromListPushButton_clicked( );
 
   void on_saveFromListPushButton_clicked( );
+
+  void on_saveAllFromListPushButton_clicked();
 
 private:
   Ui::MainWindow *ui;

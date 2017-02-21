@@ -163,7 +163,6 @@ void MainWindow::Init( ){
                             ui->rhoSpinBox->value( ),
                             ui->nrOfBoidsSpinBox->value( ),
                             ui->initPosComboBox->currentIndex( ));
-  sim->drawCross = ui->drawCrossCheckBox->isChecked( );
   sim->drawGridlines = ui->drawGridlinesCheckBox->isChecked( );
   sim->drawBoids = ui->drawBoidsCheckBox->isChecked( );
   sim->drawHull = ui->drawHullCheckBox->isChecked( );
@@ -794,12 +793,6 @@ void MainWindow::on_drawBoidsCheckBox_toggled(bool checked){
   if(ui->updateDefSettingsCheckBox->isChecked( ))
     WriteSettingsToFile( );
 } // on_drawBoidsCheckBox_toggled
-void MainWindow::on_drawCrossCheckBox_toggled(bool checked){
-  sim->drawCross = checked;
-  ReDrawOnInterfaceChange( );
-  if(ui->updateDefSettingsCheckBox->isChecked( ))
-    WriteSettingsToFile( );
-} // on_drawCrossCheckBox_toggled
 
 void MainWindow::on_updateInfBoidsPushButton_clicked( ){
   sim->SetInformedBoids(informedGroups);
@@ -1227,13 +1220,8 @@ void MainWindow::AddCheckPointToList(QString fileName){
 
 void MainWindow::on_fileListTreeWidget_doubleClicked(const QModelIndex &index){
   QString fileName = ui->fileListTreeWidget->currentItem( )->data(0,0).toString( );
-  if(!fileName.isEmpty( )){
+  if(!fileName.isEmpty( ))
     LoadCheckPoint(fileName, true);
-    for (uint i = 0; i < plotMainWindows.size( ); i++) {
-      if (plotMainWindows[i] != NULL)
-        plotMainWindows[i]->UpdateWindow( );
-    } // for
-  } // if
 } // on_fileListTreeWidget_doubleclicked
 
 void MainWindow::on_deleteFromListPushButton_clicked( ){
@@ -1262,13 +1250,8 @@ void MainWindow::on_selectUpItemListPushButton_clicked( ){
     if(index != 0){
       ui->fileListTreeWidget->setCurrentItem(ui->fileListTreeWidget->itemAbove(ui->fileListTreeWidget->currentItem( )));
       QString fileName = ui->fileListTreeWidget->currentItem( )->data(0,0).toString( );
-      if(!fileName.isEmpty( )){
+      if(!fileName.isEmpty( ))
         LoadCheckPoint(fileName, true);
-        for (uint i = 0; i < plotMainWindows.size( ); i++) {
-          if (plotMainWindows[i] != NULL)
-            plotMainWindows[i]->UpdateWindow( );
-        } // for
-      }
     } // if
   } // if
 } // on_selectUpItemListPushButton_clicked
@@ -1279,53 +1262,11 @@ void MainWindow::on_selectDownItemListPushButton_clicked( ){
     if(index != ui->fileListTreeWidget->topLevelItemCount( ) - 1){
       ui->fileListTreeWidget->setCurrentItem(ui->fileListTreeWidget->itemBelow(ui->fileListTreeWidget->currentItem( )));
       QString fileName = ui->fileListTreeWidget->currentItem( )->data(0,0).toString( );
-      if(!fileName.isEmpty( )){
+      if(!fileName.isEmpty( ))
         LoadCheckPoint(fileName, true);
-        for (uint i = 0; i < plotMainWindows.size( ); i++) {
-          if (plotMainWindows[i] != NULL)
-            plotMainWindows[i]->UpdateWindow( );
-        }
-      } // for
     } // if
   } // if
 } // on_selectDownItemListPushButton_clicked
-
-void MainWindow::on_leadershipGroupBox_toggled(bool arg1){
-
-  ui->informedAngleDoubleSpinBox->setEnabled(arg1);
-  ui->informedGroupSelectorSpinBox->setEnabled(arg1);
-  ui->nrOfInformedBoidsInGroupSpinBox->setEnabled(arg1);
-  ui->updateInfBoidsPushButton->setEnabled(arg1);
-  ui->groupInfo->setEnabled(arg1);
-
-  ui->informedAngleDoubleSpinBox->setVisible(arg1);
-  ui->informedGroupSelectorSpinBox->setVisible(arg1);
-  ui->nrOfInformedBoidsInGroupSpinBox->setVisible(arg1);
-  ui->updateInfBoidsPushButton->setVisible(arg1);
-  ui->groupInfo->setVisible(arg1);
-
-  if(arg1){
-    ui->informedGroupSelectorSpinBox->setValue(1);
-    ui->nrOfInformedBoidsInGroupSpinBox->setValue(0);
-    ui->informedAngleDoubleSpinBox->setValue(0.0);
-  }
-} // on_leadershipGroupBox_toggled
-
-void MainWindow::on_loadFromListPushButton_clicked( ){
-  QString fileName = ui->fileListTreeWidget->currentItem( )->data(0,0).toString( );
-  if(!fileName.isEmpty( ))
-    LoadCheckPoint(fileName, true);
-  for (uint i = 0; i < plotMainWindows.size( ); i++) {
-    if (plotMainWindows[i] != NULL)
-      plotMainWindows[i]->UpdateWindow( );
-  } // for
-} // on_loadFromListPushButton_clicked
-
-void MainWindow::on_saveFromListPushButton_clicked( ){
-  QString fileName = ui->fileListTreeWidget->currentItem( )->data(0,0).toString( );
-  if(!fileName.isEmpty( ))
-    SaveCheckPoint(fileName);
-} // on_saveFromListPushButton_clicked
 
 void MainWindow::scriptPressed( ){
   int timestepstorun = 100000;
@@ -1387,3 +1328,41 @@ void MainWindow::scriptPressed( ){
   } // for i
 } // scriptPressed
 
+void MainWindow::on_leadershipGroupBox_toggled(bool arg1){
+
+  ui->informedAngleDoubleSpinBox->setEnabled(arg1);
+  ui->informedGroupSelectorSpinBox->setEnabled(arg1);
+  ui->nrOfInformedBoidsInGroupSpinBox->setEnabled(arg1);
+  ui->updateInfBoidsPushButton->setEnabled(arg1);
+  ui->groupInfo->setEnabled(arg1);
+
+  ui->informedAngleDoubleSpinBox->setVisible(arg1);
+  ui->informedGroupSelectorSpinBox->setVisible(arg1);
+  ui->nrOfInformedBoidsInGroupSpinBox->setVisible(arg1);
+  ui->updateInfBoidsPushButton->setVisible(arg1);
+  ui->groupInfo->setVisible(arg1);
+
+  if(arg1){
+    ui->informedGroupSelectorSpinBox->setValue(1);
+    ui->nrOfInformedBoidsInGroupSpinBox->setValue(0);
+    ui->informedAngleDoubleSpinBox->setValue(0.0);
+  }
+} // on_leadershipGroupBox_toggled
+
+void MainWindow::on_loadFromListPushButton_clicked( ){
+  QString fileName = ui->fileListTreeWidget->currentItem( )->data(0,0).toString( );
+  if(!fileName.isEmpty( ))
+    LoadCheckPoint(fileName, true);
+} // on_loadFromListPushButton_clicked
+
+void MainWindow::on_saveFromListPushButton_clicked( ){
+  QString fileName = ui->fileListTreeWidget->currentItem( )->data(0,0).toString( );
+  if(!fileName.isEmpty( ))
+    SaveCheckPoint(fileName);
+} // on_saveFromListPushButton_clicked
+
+void MainWindow::on_saveAllFromListPushButton_clicked( ){
+  QString fileName = ui->fileListTreeWidget->currentItem( )->data(0,0).toString( );
+  if(!fileName.isEmpty( ))
+    SaveAll(fileName);
+} // on_saveAllFromListPushButton_clicked

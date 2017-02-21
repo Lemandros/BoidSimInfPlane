@@ -200,65 +200,6 @@ QImage BoidSim2D::ToQImage(uint size, bool antiAliasing) {
   } // for boids
 
   // draw lines parallel and perpendicular to the polarisation through the center of the hull
-  if(drawCross){
-    QPoint origin((pixOffset - COM + avgPosGeom).x * scale, (pixOffset - COM + avgPosGeom).y * scale);
-    boidPen.setWidth(5);
-    boidPen.setColor(QColor(0,0,0,127));
-    qPainter.setPen(boidPen);
-
-    // in direction of polarization:
-    qPainter.drawLine(origin, QPoint((P.normalised( )*2.0 - avgPosGeom).x * scale,(P.normalised( )*2.0 - avgPosGeom).y * scale));
-    qPainter.drawLine(origin, QPoint((P.normalised( )*2.0 - avgPosGeom).x * scale,(P.normalised( )*-2.0 - avgPosGeom).y * scale));
-
-    // perpendicular
-    qPainter.drawLine(origin, QPoint(( P.normalised( ) - avgPosGeom).y * scale,(P.normalised( ) * - 1.0 - avgPosGeom).x * scale));
-    qPainter.drawLine(origin, QPoint(( P.normalised( ) * - 1.0 - avgPosGeom).y * scale,(P.normalised( ) - avgPosGeom).x * scale));
-
-    // again in direction of polarization, but better
-    boidPen.setColor(QColor(255,0,0,255));
-    qPainter.setPen(boidPen);
-
-    Boid & A = boids[parBoidNrA];
-    qPainter.drawLine(origin, QPoint((offset + A.r).x * scale,(offset + A.r).y * scale));
-
-    Boid & B = boids[parBoidNrB];
-    qPainter.drawLine(origin, QPoint((offset + B.r).x * scale,(offset + B.r).y * scale));
-
-//    double S = closestParAngleMin / (closestParAngleMin - closestParAnglePlus);
-
-//    Vector2D snij = B.r * S + (A.r * (1.0 - S));
-
-//    boidPen.setWidth(7.5);
-//    boidPen.setColor(QColor(50,50,255,255));
-//    qPainter.setPen(boidPen);
-
-//    qPainter.drawLine(origin, QPoint((offset + snij + COM).x * scale,(offset + snij + COM).y * scale));
-
-    // compute super line:
-    double theta = P.Theta( );
-    double _t = -1.0 * tan(theta) * A.r.x + A.r.y;
-    _t /= tan(theta) * (B.r.x - A.r.x) - B.r.y + A.r.y;
-    double R = B.r.y * _t + A.r.y * (1.0 - _t);
-    R /= sin(theta);
-
-    boidPen.setWidth(2.5);
-    boidPen.setColor(QColor(50,50,255,255));
-    qPainter.setPen(boidPen);
-
-    qPainter.drawLine(origin, QPoint((offset + P.normalised( )*R + COM).x * scale,(offset + P.normalised( )*R + COM).y * scale));
-
-    R = B.r.x * _t + A.r.x * (1.0 - _t);
-    R /= cos(theta);
-
-    boidPen.setWidth(2.5);
-    boidPen.setColor(QColor(150,150,255,255));
-    qPainter.setPen(boidPen);
-
-    qPainter.drawLine(origin, QPoint((offset + P.normalised( )*R + COM).x * scale,(offset + P.normalised( )*R + COM).y * scale));
-
-
-    boidPen.setWidth(1);qPainter.setBrush(QBrush(QColor(0,0,0,127)));;
-  } // if drawCross
 
   //  //draw boids on convex hull and edges of convex hull
   if(drawHull || drawHullBoids){
